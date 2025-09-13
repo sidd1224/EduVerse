@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theory: <%= experiment.title %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple style for a slightly more modern scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2d3748; /* gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a5568; /* gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #718096; /* gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans antialiased">
+
+    <div class="container mx-auto p-6 md:p-12">
+
+        <header class="mb-8 border-b-2 border-gray-700 pb-4">
+            <h1 class="text-4xl md:text-5xl font-bold text-cyan-400"><%= experiment.title %></h1>
+            <p class="text-lg text-gray-400 mt-2">
+                Subject: <%= experiment.subject %> | Class: <%= experiment.experiment_class %>
+            </p>
+        </header>
+
+        <main class="space-y-10">
+
+            <!-- Theory Section -->
+            <section id="theory" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-semibold mb-4 text-cyan-300">Theory</h2>
+                <p class="text-gray-300 leading-relaxed text-lg">
+                    <%= experiment.theory %>
+                </p>
+            </section>
+
+            <!-- Materials Required Section -->
+            <section id="materials" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-semibold mb-4 text-cyan-300">Materials Required</h2>
+                <ul class="list-disc list-inside space-y-2 text-gray-300 text-lg">
+                    <% experiment.materials_required.forEach(material => { %>
+                        <li><%= material %></li>
+                    <% }); %>
+                </ul>
+            </section>
+
+            <!-- Procedure Section -->
+            <section id="procedure" class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-3xl font-semibold mb-4 text-cyan-300">Procedure</h2>
+                <div class="prose prose-invert max-w-none text-gray-300 text-lg leading-relaxed">
+                   <%- experiment.procedure %>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-12">
+             <a href="/virtual-lab?class=<%= experiment.experiment_class %>" 
+               class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors duration-300">
+                &larr; Back to Dashboard
+            </a>
+        </footer>
+
+    </div>
+
+</body>
+</html>

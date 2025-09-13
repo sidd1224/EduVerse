@@ -1,0 +1,156 @@
+[
+  {
+    "id": 1,
+    "title": "Ohm's Law Verification",
+    "subject": "Physics",
+    "experiment_class": "8",
+    "sketch_name": "ohms_law",
+    "theory": "Ohm's law states that the current through a conductor between two points is directly proportional to the voltage across the two points. V = IR, where V is voltage, I is current, and R is resistance.",
+    "materials_required": [
+      "Battery",
+      "Ammeter",
+      "Voltmeter",
+      "Resistor",
+      "Rheostat",
+      "Connecting Wires"
+    ],
+    "procedure": "<ol><li>Connect the components as per the circuit diagram.</li><li>Set the rheostat to a certain resistance.</li><li>Record the readings of the ammeter and voltmeter.</li><li>Vary the resistance using the rheostat and record multiple readings.</li><li>Plot a graph between V (y-axis) and I (x-axis). The graph should be a straight line.</li><li>The slope of the graph gives the resistance R.</li></ol>"
+  },
+  {
+    "id": 2,
+    "title": "Surface Tension of Water",
+    "subject": "Physics",
+    "experiment_class": "8",
+    "sketch_name": "surface_tension",
+    "theory": "Surface tension is the tendency of liquid surfaces to shrink into the minimum surface area possible. It is a property of the surface of a liquid that allows it to resist an external force.",
+    "materials_required": [
+      "Beaker",
+      "Water",
+      "Pepper",
+      "Soap solution"
+    ],
+    "procedure": "<ol><li>Fill the beaker with water.</li><li>Sprinkle pepper evenly on the surface of the water.</li><li>Observe that the pepper flakes float on the surface.</li><li>Add a drop of soap solution to the center of the water surface.</li><li>Observe the pepper flakes darting away to the sides of the beaker. This is due to the breaking of surface tension.</li></ol>"
+  },
+  {
+    "id": 3,
+    "title": "Chemical Properties of Electric Current",
+    "subject": "Chemistry",
+    "experiment_class": "8",
+    "sketch_name": "chemical_properties_of_electric_current",
+    "theory": "When an electric current is passed through a conducting solution, it causes chemical reactions. This process is called electrolysis. The solution is called an electrolyte, and the rods are called electrodes.",
+    "materials_required": [
+      "Beaker",
+      "Water",
+      "Salt",
+      "Two carbon rods",
+      "Battery",
+      "Connecting wires"
+    ],
+    "procedure": "<ol><li>Dissolve salt in water in the beaker to make a conducting solution.</li><li>Immerse the two carbon rods (electrodes) into the solution.</li><li>Connect the electrodes to the terminals of a battery.</li><li>Observe gas bubbles forming at the electrodes.</li><li>Oxygen gas is evolved at the positive electrode (anode) and hydrogen gas at the negative electrode (cathode).</li></ol>"
+  },
+  {
+    "id": 4,
+    "title": "Transpiration in Plants",
+    "subject": "Biology",
+    "experiment_class": "8",
+    "sketch_name": "Transpiration_in_plants",
+    "theory": "Transpiration is the process of water movement through a plant and its evaporation from aerial parts, such as leaves, stems and flowers. This experiment demonstrates the loss of water from leaves.",
+    "materials_required": [
+      "A potted plant",
+      "A transparent polythene bag",
+      "Thread"
+    ],
+    "procedure": "<ol><li>Take a healthy, well-watered potted plant.</li><li>Enclose a leafy shoot in a polythene bag and tie the mouth of the bag securely around the base of the shoot.</li><li>Place the plant in sunlight for a few hours.</li><li>Observe droplets of water on the inner surface of the bag.</li><li>This demonstrates that water is lost from the leaves in the form of water vapor, which then condenses.</li></ol>"
+  },
+  {
+    "id": 5,
+    "title": "Force and Newton's Laws",
+    "subject": "Physics",
+    "experiment_class": "9",
+    "sketch_name": "Force_and_newton",
+    "theory": "Newton's Second Law of Motion states that the acceleration of an object is directly proportional to the net force acting on it and inversely proportional to its mass (F=ma).",
+    "materials_required": [
+      "Block of a certain mass",
+      "Frictionless surface",
+      "A mechanism to apply force"
+    ],
+    "procedure": "<ol><li>Place the block on the frictionless surface.</li><li>Apply a known force to the block.</li><li>Measure the acceleration produced.</li><li>Double the force and observe that the acceleration doubles.</li><li>Double the mass of the block and apply the original force. Observe that the acceleration is halved.</li></ol>"
+  },
+  {
+    "id": 6,
+    "title": "Determination of Water's Boiling Point",
+    "subject": "Chemistry",
+    "experiment_class": "9",
+    "sketch_name": "Determination_of_water_boiling_point",
+    "theory": "The boiling point of a substance is the temperature at which it changes its state from liquid to gas at a given pressure. For pure water at standard atmospheric pressure, the boiling point is 100°C or 212°F.",
+    "materials_required": [
+      "Beaker with water",
+      "Thermometer",
+      "Bunsen burner",
+      "Tripod stand"
+    ],
+    "procedure": "<ol><li>Set up the apparatus with the beaker of water on the tripod stand.</li><li>Place the thermometer in the water, ensuring it doesn't touch the bottom of the beaker.</li><li>Heat the water using the Bunsen burner.</li><li>Record the temperature at regular intervals.</li><li>Note the temperature at which the water starts to boil vigorously and the temperature remains constant. This is the boiling point.</li></ol>"
+  },
+  {
+    "id": 7,
+    "title": "Observing Amoeba",
+    "subject": "Biology",
+    "experiment_class": "9",
+    "sketch_name": "ameoba",
+    "theory": "Amoeba is a unicellular organism which has the ability to alter its shape, primarily by extending and retracting pseudopods. They are common in freshwater environments and are a key part of the microbial ecosystem.",
+    "materials_required": [
+      "Microscope",
+      "Glass slide",
+      "Cover slip",
+      "Pond water sample"
+    ],
+    "procedure": "<ol><li>Place a drop of pond water on the center of a clean glass slide.</li><li>Gently place a cover slip over the drop of water, avoiding air bubbles.</li><li>Place the slide on the microscope stage.</li><li>Observe under low power first to locate an amoeba.</li><li>Switch to high power to observe its structure and movement using pseudopods.</li></ol>"
+  },
+  {
+    "id": 8,
+    "title": "Verification of Archimedes' Principle",
+    "subject": "Physics",
+    "experiment_class": "10",
+    "sketch_name": "Verification_of_archimedes_principle",
+    "theory": "Archimedes' principle states that the upward buoyant force that is exerted on a body immersed in a fluid, whether fully or partially, is equal to the weight of the fluid that the body displaces.",
+    "materials_required": [
+      "Spring balance",
+      "An object (e.g., a stone)",
+      "Beaker with water",
+      "Overflow can"
+    ],
+    "procedure": "<ol><li>Weigh the object in air using the spring balance. Record this as W1.</li><li>Immerse the object completely in water and record its weight. Record this as W2.</li><li>The loss in weight is W1 - W2.</li><li>Measure the weight of the water displaced by the object using the overflow can.</li><li>Compare the loss in weight of the object with the weight of the displaced water. They should be equal.</li></ol>"
+  },
+  {
+    "id": 9,
+    "title": "Saponification Reaction",
+    "subject": "Chemistry",
+    "experiment_class": "10",
+    "sketch_name": "Soapification",
+    "theory": "Saponification is a process that involves the conversion of fat, oil, or lipid into soap and alcohol by the action of heat in the presence of aqueous alkali (e.g., NaOH).",
+    "materials_required": [
+      "Vegetable oil",
+      "Sodium Hydroxide (NaOH) solution",
+      "Beaker",
+      "Stirring rod",
+      "Heating apparatus"
+    ],
+    "procedure": "<ol><li>Take some vegetable oil in a beaker.</li><li>Add a 20% solution of NaOH to it.</li><li>Heat the mixture gently while stirring continuously until a thick paste is formed.</li><li>This paste is soap.</li><li>Add some common salt (NaCl) to precipitate the soap from the solution. The soap will float on top.</li></ol>"
+  },
+  {
+    "id": 10,
+    "title": "Demonstration of Photosynthesis",
+    "subject": "Biology",
+    "experiment_class": "10",
+    "sketch_name": "Photosynthesis",
+    "theory": "Photosynthesis is a process used by plants and other organisms to convert light energy into chemical energy, through a process that converts carbon dioxide and water into glucose (sugar) and oxygen.",
+    "materials_required": [
+      "Beaker with water",
+      "Hydrilla plant",
+      "Funnel",
+      "Test tube",
+      "Sunlight"
+    ],
+    "procedure": "<ol><li>Place the Hydrilla plant in the beaker and cover it with the funnel.</li><li>Invert a test tube full of water over the stem of the funnel.</li><li>Ensure the setup is airtight and place it in bright sunlight.</li><li>Observe gas bubbles being released from the plant, which collect at the top of the test tube.</li><li>Test the collected gas with a glowing splinter. It will relight, confirming the gas is oxygen.</li></ol>"
+  }
+]
