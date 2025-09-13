@@ -1,10 +1,12 @@
-import React from "react";
+// ... existing imports
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Landing from "./components/Landing";
 import Login from "./components/Login"; // must match file name exactly
 import ForgotPassword from "./components/ForgotPassword";
 import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
+import Dashboard from './components/Dashboard';
+import VLabDashboard from './components/VLabDashboard'; // 👈 IMPORT THE NEW COMPONENT
 
 function App() {
   return (
@@ -15,6 +17,11 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/virtual-lab" element={
+          <div className="relative bg-black min-h-screen">
+            <VLabDashboard />
+          </div>
+        } />
       </Routes>
     </Router>
   );

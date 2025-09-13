@@ -1,6 +1,12 @@
 // Import the Firebase Admin SDK to interact with Firebase services
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const express = require("express");
+const path = require("path");
+const ejs = require("ejs");
+const experimentsData = require("./db.json");
 
 // Import v2 HTTPS utilities
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
@@ -132,3 +138,54 @@ exports.syncOfflineData = onCall(async (request) => {
   // 6. Return a success message
   return { success: true, message: "Data synced successfully!" };
 });
+
+// --- NEW VIRTUAL LAB SERVER ---
+const vlabApp = express();
+
+// Set EJS as the view engine
+vlabApp.set("view engine", "ejs");
+vlabApp.set("views", path.join(__dirname, "views"));
+
+// --- API Route ---
+// This provides the data for the React dashboard component.
+vlabApp.get("/api/experiments", (req, res) => {
+    const selectedClass = req.query.class || "8";
+    const experimentsBySubject = {
+        "Physics": experimentsData.filter(e => e.subject === "Physics" && e.experiment_class === selectedClass),
+        "Chemistry": experimentsData.filter(e => e.subject === "Chemistry" && e.experiment_class === selectedClass),
+        "Biology": experimentsData.filter(e => e.subject === "Biology" && e.experiment_class === selectedClass),
+    };
+    const classes = [...new Set(experimentsData.map(e => e.experiment_class))].sort();
+
+    res.json({
+        experimentsBySubject: experimentsBySubject,
+        currentClass: selectedClass,
+        availableClasses: classes,
+    });
+});
+
+// --- Page Rendering Routes ---
+
+// Route to run the p5.js experiment
+vlabApp.get("/run/:id", (req, res) => {
+    const experiment = experimentsData.find(e => e.id === parseInt(req.params.id));
+    if (!experiment) {
+        return res.status(404).send("Experiment not found");
+    }
+    // CORRECTED PATH: This path is now relative to the public root, which Firebase Hosting understands.
+    const sketchPath = `/vlab/laptop/labs/experiments/class_${experiment.experiment_class}/${experiment.subject.toLowerCase()}/${experiment.sketch_name}.js`;
+    res.render("experiment", { sketchPath: sketchPath });
+});
+
+// Route to show the theory page
+vlabApp.get("/theory/:id", (req, res) => {
+    const experiment = experimentsData.find(e => e.id === parseInt(req.params.id));
+    if (!experiment) {
+        return res.status(404).send("Experiment not found");
+    }
+    res.render("theory", { experiment: experiment });
+});
+
+// Export the vlab express app as a Cloud Function
+exports.vlab = functions.https.onRequest(vlabApp);
+
