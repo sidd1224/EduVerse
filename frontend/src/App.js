@@ -1,5 +1,4 @@
-// ... existing imports
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Landing from "./components/Landing";
 import Login from "./components/Login"; // must match file name exactly
@@ -17,11 +16,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/virtual-lab" element={
-          <div className="relative bg-black min-h-screen">
-            <VLabDashboard />
-          </div>
-        } />
+        <Route path="/virtual-lab" element={<VLabDashboard />} /> 
       </Routes>
     </Router>
   );

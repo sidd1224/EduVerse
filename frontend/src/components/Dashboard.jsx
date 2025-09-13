@@ -97,10 +97,10 @@ const Dashboard = () => {
             {expanded && <span className="font-bold text-lg ml-2">Dashboard</span>}
           </div>
           <nav className="space-y-4 flex flex-col items-center">
-            <SidebarLink expanded={expanded} emoji="🏠" text="Dashboard" />
-            <SidebarLink expanded={expanded} emoji="📚" text="Lessons" />
-            <SidebarLink expanded={expanded} emoji="📊" text="Quiz" />
-            <SidebarLink expanded={expanded} emoji="🧪" text="Virtual Lab" />
+             <SidebarLink to="/dashboard" expanded={expanded} emoji="🏠" text="Dashboard" />
+            <SidebarLink to="/lessons" expanded={expanded} emoji="📚" text="Lessons" />
+            <SidebarLink to="/quiz" expanded={expanded} emoji="📊" text="Quiz" />
+            <SidebarLink to="/virtual-lab" expanded={expanded} emoji="🧪" text="Virtual Lab" />
           </nav>
         </div>
         <div className="flex justify-center mt-4">
