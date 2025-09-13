@@ -1,9 +1,18 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const EduVerseLogo = ({ animationStage }) => {
+  const navigate = useNavigate();
+
   return (
-    <div className="relative z-10 text-center">
-      <div className="relative">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-indigo-900 to-black text-center overflow-hidden">
+      {/* Decorative corner elements */}
+      <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-purple-500 opacity-40"></div>
+      <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-purple-500 opacity-40"></div>
+      <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-purple-500 opacity-40"></div>
+      <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-purple-500 opacity-40"></div>
+
+      <div className="relative z-10">
         {/* Glow background */}
         <div
           className={`absolute inset-0 blur-3xl transition-all duration-2000 ${
@@ -128,7 +137,10 @@ const EduVerseLogo = ({ animationStage }) => {
           }`}
           style={{ transitionDelay: "2500ms" }}
         >
-          <button className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-semibold text-white shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 hover:from-blue-500 hover:to-purple-500">
+          <button
+            onClick={() => navigate("/login")}
+            className="group relative px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full font-semibold text-white shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 hover:from-blue-500 hover:to-purple-500"
+          >
             <span className="relative z-10">Enter EduVerse</span>
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
           </button>
