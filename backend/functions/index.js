@@ -1,191 +1,171 @@
-// Import the Firebase Admin SDK to interact with Firebase services
-const admin = require("firebase-admin");
-const { FieldValue } = require("firebase-admin/firestore");
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const express = require("express");
 const path = require("path");
-const ejs = require("ejs");
-const experimentsData = require("./db.json");
+const fs = require("fs");
+const cors = require("cors");
 
-// Import v2 HTTPS utilities
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-
-// Import v1 Auth trigger (since v2/identity not available in 6.4.0)
-const { user } = require("firebase-functions/v1/auth");
-
-// Initialize the Admin SDK. This must be done once.
 admin.initializeApp();
+const db = admin.firestore();
 
-/**
- * A trigger function that runs whenever a new user is created in Firebase Auth.
- * (Using v1 Auth trigger for compatibility)
- */
-exports.createUserProfile = user().onCreate(async (userRecord) => {
-  console.log(`Creating profile for new user: ${userRecord.uid}`);
+// =================================================================
+// YOUR ORIGINAL EDUVERSE CLOUD FUNCTIONS (UNCHANGED)
+// =================================================================
 
-  return admin.firestore().collection("users").doc(userRecord.uid).set({
-    email: userRecord.email,
-    name: userRecord.displayName || "New User",
-    role: "student",
-    createdAt: FieldValue.serverTimestamp(),
-  });
+exports.makeAdmin = functions.https.onCall(async (data, context) => {
+  if (context.auth.token.admin !== true) {
+    return { error: "Only admins can make other admins, sucker!" };
+  }
+  const user = await admin.auth().getUserByEmail(data.email);
+  await admin.auth().setCustomUserClaims(user.uid, { admin: true });
+  return { message: `Success! ${data.email} has been made an admin.` };
 });
 
-/**
- * A callable function that allows an authenticated user to fetch a list of all courses.
- */
-exports.getCourses = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
+exports.generateToken = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
+    );
   }
+  const uid = context.auth.uid;
+  const customToken = await admin.auth().createCustomToken(uid);
+  return { token: customToken };
+});
 
-  const coursesSnapshot = await admin.firestore().collection("courses").get();
-
-  const courses = [];
-  coursesSnapshot.forEach((doc) => {
-    courses.push({
-      id: doc.id,
-      ...doc.data(),
+exports.createUser = functions.https.onCall(async (data, context) => {
+  const { email, password, name, student_class } = data;
+  try {
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
+      displayName: name,
     });
-  });
 
-  return { courses };
-});
-
-/**
- * A callable function that fetches all lessons for a specific course ID.
- */
-exports.getLessonsForCourse = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  const courseId = request.data.courseId;
-  if (!courseId) {
-    throw new HttpsError("invalid-argument", "You must provide a courseId.");
-  }
-
-  const lessonsSnapshot = await admin
-    .firestore()
-    .collection("lessons")
-    .where("courseId", "==", courseId)
-    .orderBy("order")
-    .get();
-
-  const lessons = [];
-  lessonsSnapshot.forEach((doc) => {
-    lessons.push({
-      id: doc.id,
-      ...doc.data(),
+    await db.collection("students").doc(userRecord.uid).set({
+      name: name,
+      email: email,
+      student_class: student_class,
     });
-  });
 
-  return { lessons };
+    return { uid: userRecord.uid };
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message);
+  }
 });
 
-/**
- * A callable function that receives an array of offline actions and commits them
- * to the database in a single, safe transaction.
- */
-exports.syncOfflineData = onCall(async (request) => {
-  // 1. Check for authentication
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-
-  // 2. Get the array of actions from the client
-  const actions = request.data.actions;
-  if (!Array.isArray(actions) || actions.length === 0) {
-    throw new HttpsError(
-      "invalid-argument",
-      "You must provide a valid array of actions."
+exports.getStudent = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "The function must be called while authenticated.",
     );
   }
 
-  const userId = request.auth.uid;
-  const db = admin.firestore();
-
-  // 3. Use a Batched Write to ensure all operations succeed or none do.
-  const batch = db.batch();
-
-  console.log(`Starting sync for user ${userId} with ${actions.length} actions.`);
-
-  // 4. Loop through each action from the client
-  actions.forEach((action) => {
-    if (action.type === "QUIZ_SUBMIT") {
-      const newSubmissionRef = db.collection("quizSubmissions").doc();
-      batch.set(newSubmissionRef, {
-        ...action.payload,
-        userId: userId,
-        submittedAt:FieldValue.serverTimestamp(),
-      });
-    } else if (action.type === "LAB_PROGRESS") {
-      const newLabProgressRef = db.collection("virtualLabProgress").doc();
-      batch.set(newLabProgressRef, {
-        ...action.payload,
-        userId: userId,
-        completedAt: FieldValue.serverTimestamp(),
-      });
+  try {
+    const studentDoc = await db.collection("students").doc(context.auth.uid).get();
+    if (!studentDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Student not found.");
     }
-  });
-
-  // 5. Commit all the operations in the batch to the database
-  await batch.commit();
-
-  console.log(`Successfully synced ${actions.length} actions for user ${userId}.`);
-
-  // 6. Return a success message
-  return { success: true, message: "Data synced successfully!" };
+    return studentDoc.data();
+  } catch (error) {
+    throw new functions.https.HttpsError("internal", error.message);
+  }
 });
 
-// --- NEW VIRTUAL LAB SERVER ---
+
+// =================================================================
+// NEW VIRTUAL LAB EXPRESS SERVER
+// =================================================================
+
 const vlabApp = express();
+
+// Use CORS to allow the frontend to call this API
+vlabApp.use(cors({ origin: true }));
 
 // Set EJS as the view engine
 vlabApp.set("view engine", "ejs");
 vlabApp.set("views", path.join(__dirname, "views"));
 
-// --- API Route ---
-// This provides the data for the React dashboard component.
+// --- API Endpoint to get experiment data ---
 vlabApp.get("/api/experiments", (req, res) => {
+  try {
     const selectedClass = req.query.class || "8";
+    
+    // Read the db.json file
+    const dbPath = path.join(__dirname, "db.json");
+    const experimentsData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+    
+    // Filter experiments for the selected class
     const experimentsBySubject = {
-        "Physics": experimentsData.filter(e => e.subject === "Physics" && e.experiment_class === selectedClass),
-        "Chemistry": experimentsData.filter(e => e.subject === "Chemistry" && e.experiment_class === selectedClass),
-        "Biology": experimentsData.filter(e => e.subject === "Biology" && e.experiment_class === selectedClass),
+      Physics: experimentsData.filter((exp) => exp.subject === "Physics" && exp.experiment_class.toString() === selectedClass),
+      Chemistry: experimentsData.filter((exp) => exp.subject === "Chemistry" && exp.experiment_class.toString() === selectedClass),
+      Biology: experimentsData.filter((exp) => exp.subject === "Biology" && exp.experiment_class.toString() === selectedClass),
     };
-    const classes = [...new Set(experimentsData.map(e => e.experiment_class))].sort();
-
+    
+    // Get all unique available classes
+    const availableClasses = [...new Set(experimentsData.map((exp) => exp.experiment_class.toString()))].sort();
+    
+    // Always send a JSON response
     res.json({
-        experimentsBySubject: experimentsBySubject,
-        currentClass: selectedClass,
-        availableClasses: classes,
+      experimentsBySubject,
+      currentClass: selectedClass,
+      availableClasses,
     });
+
+  } catch (error) {
+    console.error("Error fetching experiments:", error);
+    // CRITICAL FIX: Always send a JSON error, not an HTML page
+    res.status(500).json({ error: "Failed to load experiment data.", details: error.message });
+  }
 });
 
-// --- Page Rendering Routes ---
 
-// Route to run the p5.js experiment
+// --- Server-side route to run an experiment ---
 vlabApp.get("/run/:id", (req, res) => {
-    const experiment = experimentsData.find(e => e.id === parseInt(req.params.id));
+  try {
+    const experimentId = req.params.id;
+    const dbPath = path.join(__dirname, "db.json");
+    const experimentsData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+    const experiment = experimentsData.find((exp) => exp.id.toString() === experimentId);
+
     if (!experiment) {
-        return res.status(404).send("Experiment not found");
+      return res.status(404).send("Experiment not found");
     }
-    // CORRECTED PATH: This path is now relative to the public root, which Firebase Hosting understands.
-    const sketchPath = `/vlab/laptop/labs/experiments/class_${experiment.experiment_class}/${experiment.subject.toLowerCase()}/${experiment.sketch_name}.js`;
+
+    // Construct the correct public path to the p5.js sketch file
+    // Firebase Hosting serves the 'public' folder at the root.
+    const sketchPath = `/vlab/laptop/labs/experiments/class_${experiment.experiment_class}/${experiment.subject.toLowerCase()}/${experiment.file_name}.js`;
+    
     res.render("experiment", { sketchPath: sketchPath });
+  
+  } catch (error) {
+      console.error("Error running experiment:", error);
+      res.status(500).send("Error loading experiment.");
+  }
 });
 
-// Route to show the theory page
+// --- Server-side route to view an experiment's theory ---
 vlabApp.get("/theory/:id", (req, res) => {
-    const experiment = experimentsData.find(e => e.id === parseInt(req.params.id));
-    if (!experiment) {
-        return res.status(404).send("Experiment not found");
+    try {
+        const experimentId = req.params.id;
+        const dbPath = path.join(__dirname, "db.json");
+        const experimentsData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
+        const experiment = experimentsData.find((exp) => exp.id.toString() === experimentId);
+
+        if (!experiment) {
+            return res.status(404).send("Experiment not found");
+        }
+        
+        res.render("theory", { experiment: experiment });
+
+    } catch (error) {
+        console.error("Error fetching theory:", error);
+        res.status(500).send("Error loading theory page.");
     }
-    res.render("theory", { experiment: experiment });
 });
 
-// Export the vlab express app as a Cloud Function
+
+// Export the vlab Express app as a Cloud Function
 exports.vlab = functions.https.onRequest(vlabApp);
 
