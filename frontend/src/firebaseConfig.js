@@ -31,13 +31,13 @@ if (window.location.hostname === "localhost") {
   console.log("Development mode: Connecting to local Firebase emulators.");
 
   // Point the SDK to the Auth Emulator
-  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectAuthEmulator(auth, "http://127.0.0.1:9091");
 
   // Point the SDK to the Firestore Emulator
-  connectFirestoreEmulator(db, "127.0.0.1", 8070);
+  connectFirestoreEmulator(db, "127.0.0.1", 8065);
 
   // Point the SDK to the Functions Emulator
-  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  connectFunctionsEmulator(functions, "127.0.0.1", 5008);
 }
 
 // Export the services for use in other parts of the app

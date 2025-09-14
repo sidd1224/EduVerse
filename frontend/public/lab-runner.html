@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EduVerse Virtual Lab</title>
+    <!-- We include the p5.js library, as it's common for simulations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
+        canvas { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <script>
+        // This script reads the 'id' parameter from the URL
+        const params = new URLSearchParams(window.location.search);
+        const experimentId = params.get('id');
+
+        // This is a map to find the script path from the ID
+        // In a real app, this could also come from an API call
+        const experimentManifest = {
+            "1": "/vlab/laptop/labs/experiments/class_8/physics/surface_tension.js",
+            "2": "/vlab/laptop/labs/experiments/class_8/chemistry/chemical_properties_of_electric_current.js",
+            "3": "/vlab/laptop/labs/experiments/class_8/biology/Transpiration_in_plants.js",
+            "4": "/vlab/laptop/labs/experiments/class_9/physics/Force_and_newton.js",
+            "5": "/vlab/laptop/labs/experiments/class_9/chemistry/Determination_of_water_boiling_point.js",
+            "6": "/vlab/laptop/labs/experiments/class_9/biology/ameoba.js",
+            "7": "/vlab/laptop/labs/experiments/class_10/physics/Verification_of_archimedes_principle.js",
+            "8": "/vlab/laptop/labs/experiments/class_10/chemistry/Soapification.js",
+            "9": "/vlab/laptop/labs/experiments/class_10/biology/Photosynthesis.js"
+        };
+
+        const scriptToLoad = experimentManifest[experimentId];
+
+        if (scriptToLoad) {
+            // It then creates a <script> tag to load that specific experiment file
+            let scriptElement = document.createElement('script');
+            scriptElement.src = scriptToLoad;
+            document.body.appendChild(scriptElement);
+        } else {
+            document.body.innerHTML = '<p>Error: Could not find experiment script for the given ID.</p>';
+        }
+    </script>
+</body>
+</html>

@@ -1,58 +1,46 @@
 {
-  "firestore": {
-    "database": "(default)",
-    "location": "asia-south1",
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
   "hosting": {
-    "public": "public",
+    "public": "../frontend/public",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
+    "headers": [
       {
-        "source": "/vlab/**",
-        "function": "vlab"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
+        "source": "**/*.js",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/javascript"
+          }
+        ]
       }
     ]
   },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": [
-        "npm --prefix \"$RESOURCE_DIR\" run lint"
-      ]
-    }
-  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": {
+    "source": "functions"
+  },
   "emulators": {
     "auth": {
-      "port": 9099
+      "port": 9091
     },
     "functions": {
-      "port": 5001
+      "port": 5008
     },
     "firestore": {
-      "port": 8070
+      "port": 8065
+    },
+    "hosting": {
+      "port": 5015
     },
     "ui": {
       "enabled": true
-    },
-    "singleProjectMode": true
+    }
   }
 }
 
