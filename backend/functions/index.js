@@ -79,15 +79,17 @@ exports.getStudent = onCall(async (request) => {
 // =================================================================
 // VIRTUAL LAB EXPRESS SERVER
 // =================================================================
-
 const app = express();
 app.use(cors({ origin: true }));
 
-// ✅ Route to fetch all experiments
+// ✅ Fetch all experiments
 app.get("/api/experiments", async (req, res) => {
   try {
     const snapshot = await db.collection("experiments").get();
-    const experiments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const experiments = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
     res.json(experiments);
   } catch (error) {
     console.error("Error fetching experiments:", error);
@@ -95,25 +97,89 @@ app.get("/api/experiments", async (req, res) => {
   }
 });
 
-// ✅ Route to fetch experiments by subject
+// ✅ Fetch experiments by subject
 app.get("/api/experiments/:subject", async (req, res) => {
   try {
     const subject = req.params.subject;
-    const snapshot = await db.collection("experiments").where("subject", "==", subject).get();
+    const snapshot = await db
+      .collection("experiments")
+      .where("subject", "==", subject)
+      .get();
 
     if (snapshot.empty) {
-      return res.status(404).json({ error:" No experiments found for subject: ${subject} "});
+      return res
+        .status(404)
+        .json({ error: `No experiments found for subject: ${subject}` });
     }
 
-    const experiments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const experiments = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
     res.json(experiments);
   } catch (error) {
-    console.error("Error fetching experiments for subject ${req.params.subject}:", error);
+    console.error(`Error fetching experiments for subject ${req.params.subject}:`, error);
     res.status(500).json({ error: "Failed to fetch experiments." });
   }
 });
 
-// ✅ Route to fetch a specific experiment by ID
+// ✅ Fetch experiments by class
+app.get("/api/experiments/class/:class", async (req, res) => {
+  try {
+    const className = req.params.class;
+    const snapshot = await db
+      .collection("experiments")
+      .where("class", "==", className)
+      .get();
+
+    if (snapshot.empty) {
+      return res
+        .status(404)
+        .json({ error: `No experiments found for class: ${className}` });
+    }
+
+    const experiments = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    res.json(experiments);
+  } catch (error) {
+    console.error(`Error fetching experiments for class ${req.params.class}:`, error);
+    res.status(500).json({ error: "Failed to fetch experiments." });
+  }
+});
+
+// ✅ Fetch experiments by subject + class
+app.get("/api/experiments/:subject/:class", async (req, res) => {
+  try {
+    const { subject, class: className } = req.params;
+    const snapshot = await db
+      .collection("experiments")
+      .where("subject", "==", subject)
+      .where("class", "==", className)
+      .get();
+
+    if (snapshot.empty) {
+      return res
+        .status(404)
+        .json({ error: `No experiments found for ${subject}, class ${className}` });
+    }
+
+    const experiments = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    res.json(experiments);
+  } catch (error) {
+    console.error(
+      `Error fetching experiments for subject ${req.params.subject} and class ${req.params.class}:`,
+      error
+    );
+    res.status(500).json({ error: "Failed to fetch experiments." });
+  }
+});
+
+// ✅ Fetch a specific experiment by ID
 app.get("/api/experiment/:id", async (req, res) => {
   try {
     const experimentId = req.params.id;
@@ -126,7 +192,10 @@ app.get("/api/experiment/:id", async (req, res) => {
     const experiment = snapshot.data();
     res.json({ id: snapshot.id, ...experiment });
   } catch (error) {
-    console.error("Error fetching experiment with ID ${req.params.id}:", error);
+    console.error(
+      `Error fetching experiment with ID ${req.params.id}:`,
+      error
+    );
     res.status(500).json({ error: "Failed to fetch experiment." });
   }
 });

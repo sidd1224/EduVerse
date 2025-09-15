@@ -1,59 +1,59 @@
 // src/components/BiologyLab.jsx
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import API_BASE from "../../api";
 
 const BiologyLab = () => {
   const navigate = useNavigate();
+  const { classId } = useParams(); // dynamic class from route param
   const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch experiments for Biology, class 8 (change as needed)
-    fetch("/api/experiments?class=8")
-      .then(response => {
+    if (!classId) return;
+
+    fetch(`${API_BASE}/api/experiments/Biology/${classId}`)
+      .then((response) => {
         if (!response.ok) {
-          return response.text().then(text => { throw new Error(text); });
+          return response.text().then((text) => {
+            throw new Error(text);
+          });
         }
         return response.json();
       })
-      .then(data => {
-        // Filter for Biology experiments if needed
-        const BiologyExperiments = data.experimentsBySubject?.Biology || [];
-        setExperiments(BiologyExperiments);
+      .then((data) => {
+        setExperiments(data);
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
-  }, []);
+  }, [classId]);
 
   return (
     <div className="min-h-screen bg-blue-100 relative flex flex-col items-center justify-center">
-      {/* 🔹 Back button (top-left corner, small transparent box) */}
       <button
-        onClick={() => navigate("/VirtualLab")}
+        onClick={() => navigate("/dashboard/virtuallab")}
         className="absolute top-4 right-4 bg-white/40 backdrop-blur-sm px-3 py-1 rounded-lg shadow text-sm font-medium text-blue-700 hover:bg-white/70 transition flex items-center space-x-1"
       >
         <span>⬅️</span>
         <span>Back</span>
       </button>
 
-      {/* Main Biology Lab Content */}
-      <h1 className="text-3xl font-bold text-blue-700 mb-4">⚛️ Biology Lab</h1>
+      <h1 className="text-3xl font-bold text-blue-700 mb-4">🧬 Biology Lab</h1>
       <p className="text-gray-600 mb-6">
-        Here you can explore experiments in <b>Mechanics and Motion</b>!
+        Showing experiments for <b>Biology, Class {classId}</b>
       </p>
 
       {loading && <div>Loading experiments...</div>}
       {error && <div className="text-red-500">Error: {error}</div>}
       {!loading && !error && (
         <ul className="mt-4 space-y-2">
-          {experiments.map(exp => (
+          {experiments.map((exp) => (
             <li key={exp.id} className="bg-white p-3 rounded shadow">
               <span className="font-semibold">{exp.title}</span>
-              {/* Add more experiment details as needed */}
             </li>
           ))}
         </ul>

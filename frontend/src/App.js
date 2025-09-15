@@ -28,10 +28,12 @@ function App() {
           <Route index element={<DashboardHome />} />
           <Route path="teacher" element={<TeacherDashboard />} />
         </Route>
+
         {/* Virtual Labs */}
         <Route path="/dashboard/virtuallab" element={<VirtualLab />} />
         <Route path="/VirtualLab/physics" element={<PhysicsLab />} />
-        <Route path="/VirtualLab/biology" element={<BiologyLab />} />
+        {/* 👇 BiologyLab now takes a classId param */}
+        <Route path="/VirtualLab/biology/:classId" element={<BiologyLab />} />
         <Route path="/VirtualLab/chemistry" element={<ChemistryLab />} />
 
         {/* Quiz */}

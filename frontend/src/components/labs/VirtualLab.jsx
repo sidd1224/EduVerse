@@ -74,7 +74,7 @@ const VirtualLab = () => {
               {biologyExperiments.length} experiment(s) available
             </p>
             <button
-              onClick={() => navigate("/VirtualLab/Biology")}
+              onClick={() => navigate("/VirtualLab/Biology/8")}
               className="bg-purple-600 text-white px-4 py-2 rounded"
             >
               View
