@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ cls }} - {{ subject }} Textbook</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#0d6efd">
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
+      .then(() => console.log("✅ Service Worker Registered"))
+      .catch(err => console.log("❌ Service Worker Failed:", err));
+  }
+</script>
+</head>
+<body class="p-4 bg-light">
+  <div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold text-primary">{{ cls }} - {{ subject }} - Textbook</h2>
+      <a href="{{ url_for('subject_page', cls=cls, subject=subject) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back
+      </a>
+    </div>
+
+    <!-- Upload & View Card -->
+    <div class="card shadow-lg border-0 mb-4">
+      <div class="card-body">
+        <h4 class="card-title mb-3 text-success"><i class="bi bi-upload"></i> Upload & Manage Textbooks</h4>
+        <form action="{{ url_for('upload_textbook', cls=cls, subject=subject) }}" method="post" enctype="multipart/form-data" class="row g-3">
+          <div class="col-md-5">
+            <input type="file" name="file" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <input type="password" name="password" placeholder="Enter password" class="form-control" required>
+          </div>
+          <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-dark">
+              <i class="bi bi-cloud-arrow-up"></i> Upload
+            </button>
+          </div>
+          <div class="col-md-2 d-grid">
+            <!-- View Textbooks Button -->
+            <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewTextbooksModal">
+              <i class="bi bi-eye"></i> View Textbooks
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal for Available Textbooks -->
+    <div class="modal fade" id="viewTextbooksModal" tabindex="-1" aria-labelledby="viewTextbooksLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title" id="viewTextbooksLabel"><i class="bi bi-book"></i> Available Textbooks</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {% if files %}
+              <ul class="list-group list-group-flush">
+                {% for file in files %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <i class="bi bi-file-earmark-pdf text-danger"></i> {{ file }}
+                    </div>
+                    <a href="{{ url_for('view_textbook', cls=cls, subject=subject, filename=file) }}" 
+   class="btn btn-sm btn-outline-success">
+   <i class="bi bi-eye"></i> View
+</a>
+
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-muted"><i class="bi bi-info-circle"></i> No textbooks uploaded yet.</p>
+            {% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

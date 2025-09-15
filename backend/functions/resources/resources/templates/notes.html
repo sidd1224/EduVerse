@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ cls }} - {{ subject }} Notes</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#0d6efd">
+
+<script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("{{ url_for('static', filename='service-worker.js') }}")
+      .then(() => console.log("✅ Service Worker Registered"))
+      .catch(err => console.log("❌ Service Worker Failed:", err));
+  }
+</script>
+</head>
+<body class="p-4 bg-light">
+  <div class="container">
+    <h2 class="mb-4 text-primary fw-bold">{{ cls }} - {{ subject }} - Notes</h2>
+    <a href="{{ url_for('subject_page', cls=cls, subject=subject) }}" class="btn btn-outline-secondary mb-4">⬅ Back</a>
+
+    <div class="d-grid gap-4">
+      {% for chapter in chapters %}
+        <div class="card p-3 shadow border-0">
+          <h4 class="text-success">{{ chapter }}</h4>
+          <form action="{{ url_for('upload_file', cls=cls, subject=subject, chapter=chapter) }}" 
+                method="post" enctype="multipart/form-data" class="row g-2 align-items-center">
+            
+            <!-- File Upload -->
+            <div class="col-md-4">
+              <input type="file" name="file" class="form-control" required>
+            </div>
+
+            <!-- Password -->
+            <div class="col-md-3">
+              <input type="password" name="password" placeholder="Enter password" class="form-control" required>
+            </div>
+
+            <!-- Upload Button -->
+            <div class="col-md-2 d-grid">
+              <button type="submit" class="btn btn-dark">
+                ⬆ Upload
+              </button>
+            </div>
+
+            <!-- View Notes Button -->
+            <div class="col-md-3 d-grid">
+              <a href="{{ url_for('chapter_page', cls=cls, subject=subject, chapter=chapter) }}" 
+                 class="btn btn-outline-info">
+                 👁 View Notes
+              </a>
+            </div>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
