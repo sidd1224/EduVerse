@@ -1,13 +1,45 @@
 // src/components/VirtualLab.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const VirtualLab = () => {
   const navigate = useNavigate();
+  const [experiments, setExperiments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Direct call to Firebase Functions emulator
+    fetch("http://127.0.0.1:5008/eduverse-c818a/us-central1/vlab/api/experiments")
+      .then(response => response.json())
+      .then(data => {
+        // data is an array of experiments
+        // You can group/filter by subject here
+        setExperiments(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError("Failed to fetch experiments data.");
+        setLoading(false);
+      });
+  }, []);
 
   const handleReturn = () => {
     navigate("/Dashboard"); // back to dashboard
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  // Filter experiments by subject
+  const biologyExperiments = experiments.filter((exp) => exp.subject === "Biology");
+  const chemistryExperiments = experiments.filter((exp) => exp.subject === "Chemistry");
+  const physicsExperiments = experiments.filter((exp) => exp.subject === "Physics");
 
   return (
     <div className="min-h-screen bg-purple-100 py-10">
@@ -39,7 +71,7 @@ const VirtualLab = () => {
             />
             <p className="font-bold text-purple-700 text-lg mb-2">Biology</p>
             <p className="text-gray-500 text-sm text-center mb-3">
-              DNA structure and functions
+              {biologyExperiments.length} experiment(s) available
             </p>
             <button
               onClick={() => navigate("/VirtualLab/Biology")}
@@ -58,7 +90,7 @@ const VirtualLab = () => {
             />
             <p className="font-bold text-purple-700 text-lg mb-2">Chemistry</p>
             <p className="text-gray-500 text-sm text-center mb-3">
-              Introduction to Molecular Chemistry
+              {chemistryExperiments.length} experiment(s) available
             </p>
             <button
               onClick={() => navigate("/VirtualLab/Chemistry")}
@@ -77,7 +109,7 @@ const VirtualLab = () => {
             />
             <p className="font-bold text-purple-700 text-lg mb-2">Physics</p>
             <p className="text-gray-500 text-sm text-center mb-3">
-              Fundamentals of Mechanics and Motion
+              {physicsExperiments.length} experiment(s) available
             </p>
             <button
               onClick={() => navigate("/VirtualLab/Physics")}

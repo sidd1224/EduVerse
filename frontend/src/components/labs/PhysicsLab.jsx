@@ -1,9 +1,33 @@
 // src/components/PhysicsLab.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PhysicsLab = () => {
   const navigate = useNavigate();
+  const [experiments, setExperiments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Fetch experiments for Physics, class 8 (change as needed)
+    fetch("/api/experiments?class=8")
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => { throw new Error(text); });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Filter for Physics experiments if needed
+        const physicsExperiments = data.experimentsBySubject?.Physics || [];
+        setExperiments(physicsExperiments);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="min-h-screen bg-blue-100 relative flex flex-col items-center justify-center">
@@ -21,6 +45,19 @@ const PhysicsLab = () => {
       <p className="text-gray-600 mb-6">
         Here you can explore experiments in <b>Mechanics and Motion</b>!
       </p>
+
+      {loading && <div>Loading experiments...</div>}
+      {error && <div className="text-red-500">Error: {error}</div>}
+      {!loading && !error && (
+        <ul className="mt-4 space-y-2">
+          {experiments.map(exp => (
+            <li key={exp.id} className="bg-white p-3 rounded shadow">
+              <span className="font-semibold">{exp.title}</span>
+              {/* Add more experiment details as needed */}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };

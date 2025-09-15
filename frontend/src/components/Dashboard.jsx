@@ -98,7 +98,7 @@ const DashboardLayout = () => {
             <SidebarLink to="/dashboard" expanded={expanded} emoji="🏠" text="Home" />
             <SidebarLink to="/dashboard/lessons" expanded={expanded} emoji="📚" text="Lessons" />
             <SidebarLink to="/dashboard/quiz" expanded={expanded} emoji="📊" text="Quiz" />
-            <SidebarLink to="/dashboard/virtual-lab" expanded={expanded} emoji="🧪" text="Virtual Lab" />
+            <SidebarLink to="/dashboard/virtuallab" expanded={expanded} emoji="🧪" text="Virtual Lab" />
           </nav>
         </div>
         <div className="flex justify-center mt-4">

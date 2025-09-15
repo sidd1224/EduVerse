@@ -1,12 +1,12 @@
 // src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import DashboardLayout, { DashboardHome } from "./components/Dashboard.jsx";
 
 import Landing from "./components/Landing";
 import Login from "./components/Login";
 import ForgotPassword from "./components/ForgotPassword";
 import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
 import TeacherDashboard from "./components/TeacherDashboard";
 import Quiz from "./components/Quiz";
 
@@ -24,17 +24,18 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         {/* Dashboards */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/teacher" element={<TeacherDashboard />} />
-
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="teacher" element={<TeacherDashboard />} />
+        </Route>
         {/* Virtual Labs */}
-        <Route path="/virtuallab" element={<VirtualLab />} />
-        <Route path="/virtuallab/physics" element={<PhysicsLab />} />
-        <Route path="/virtuallab/biology" element={<BiologyLab />} />
-        <Route path="/virtuallab/chemistry" element={<ChemistryLab />} />
+        <Route path="/dashboard/virtuallab" element={<VirtualLab />} />
+        <Route path="/VirtualLab/physics" element={<PhysicsLab />} />
+        <Route path="/VirtualLab/biology" element={<BiologyLab />} />
+        <Route path="/VirtualLab/chemistry" element={<ChemistryLab />} />
 
         {/* Quiz */}
-        <Route path="/quiz" element={<Quiz />} />
+        <Route path="/dashboard/quiz" element={<Quiz />} />
       </Routes>
     </Router>
   );

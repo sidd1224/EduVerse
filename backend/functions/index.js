@@ -73,81 +73,63 @@ exports.getStudent = onCall(async (request) => {
 // VIRTUAL LAB EXPRESS SERVER (FIXED ROUTES)
 // =================================================================
 
-const vlabApp = express();
-vlabApp.use(cors({ 
-  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
-  credentials: true 
-}));
 
-vlabApp.use((req, res, next) => {
-  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' http://127.0.0.1:5008");
-  next();
-});
 
-vlabApp.set("view engine", "ejs");
-vlabApp.set("views", path.join(__dirname, "views"));
 
-// ✅ Explicit route for /api/experiments
+// =================================================================
+// VIRTUAL LAB EXPRESS SERVER
+// =================================================================
 
-// ✅ CHANGE THIS ROUTE DECLARATION
-vlabApp.get("/experiments", (req, res) => {
-  const classId = req.query.class;
-  const dbPath = path.join(__dirname, "db.json");
-  fs.readFile(dbPath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Failed to read experiments database." });
-    let experiments = [];
-    try {
-      experiments = JSON.parse(data);
-    } catch (parseErr) {
-      return res.status(500).json({ error: "Invalid experiments database format." });
-    }
-    if (classId) {
-      experiments = experiments.filter(exp => exp.experiment_class === classId);
-    }
-    // Group by subject for frontend
-    const experimentsBySubject = {};
-    experiments.forEach(exp => {
-      if (!experimentsBySubject[exp.subject]) experimentsBySubject[exp.subject] = [];
-      experimentsBySubject[exp.subject].push(exp);
-    });
-    // Get available classes
-    const availableClasses = [...new Set(experiments.map(exp => exp.experiment_class))];
-    res.json({
-      currentClass: classId,
-      availableClasses,
-      experimentsBySubject
-    });
-  });
-});
+const app = express();
+app.use(cors({ origin: true }));
 
-// ✅ Route for running an experiment
-vlabApp.get('/run/:id', (req, res) => {
-  // Example: Render a page or serve a file for the experiment
-  const experimentId = req.params.id;
-  // You can customize this logic as needed
-  res.send(`Experiment runner for ID: ${experimentId}`);
-});
-
-// ✅ Route for theory page
-vlabApp.get("/theory/:id", (req, res) => {
+// ✅ Route to fetch all experiments
+app.get("/api/experiments", async (req, res) => {
   try {
-    const experimentId = req.params.id;
-    const dbPath = path.join(__dirname, "db.json");
-    const experimentsData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
-    const experiment = experimentsData.find(
-      (exp) => exp.id.toString() === experimentId
-    );
-
-    if (!experiment) {
-      return res.status(404).send("Experiment not found");
-    }
-
-    res.render("theory", { experiment: experiment });
+    const snapshot = await db.collection("experiments").get();
+    const experiments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.json(experiments);
   } catch (error) {
-    console.error("Error fetching theory:", error);
-    res.status(500).send("Error loading theory page.");
+    console.error("Error fetching experiments:", error);
+    res.status(500).json({ error: "Failed to fetch experiments." });
   }
 });
 
-// ✅ Export express app as cloud function
-exports.vlab = functions.https.onRequest(vlabApp);
+// ✅ Route to fetch experiments by subject
+app.get("/api/experiments/:subject", async (req, res) => {
+  try {
+    const subject = req.params.subject;
+    const snapshot = await db.collection("experiments").where("subject", "==", subject).get();
+
+    if (snapshot.empty) {
+      return res.status(404).json({ error:" No experiments found for subject: ${subject} "});
+    }
+
+    const experiments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.json(experiments);
+  } catch (error) {
+    console.error("Error fetching experiments for subject ${req.params.subject}:", error);
+    res.status(500).json({ error: "Failed to fetch experiments." });
+  }
+});
+
+// ✅ Route to fetch a specific experiment by ID
+app.get("/api/experiment/:id", async (req, res) => {
+  try {
+    const experimentId = req.params.id;
+    const snapshot = await db.collection("experiments").doc(experimentId).get();
+
+    if (!snapshot.exists) {
+      return res.status(404).json({ error: "Experiment not found" });
+    }
+
+    const experiment = snapshot.data();
+    res.json({ id: snapshot.id, ...experiment });
+  } catch (error) {
+    console.error("Error fetching experiment with ID ${req.params.id}:", error);
+    res.status(500).json({ error: "Failed to fetch experiment." });
+  }
+});
+
+// ✅ Export the Express app as a Cloud Function
+exports.vlab = functions.https.onRequest(app);

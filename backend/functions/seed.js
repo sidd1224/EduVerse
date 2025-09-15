@@ -1,26 +1,19 @@
 // seed.js
 
 const admin = require("firebase-admin");
+const dbData = require("./db.json"); // Import db.json data
 
 // Initialize the Admin SDK
 admin.initializeApp({
-  // We don't need credentials for the local emulator
-  projectId: "eduverse-c818a", // Use a dummy project ID
+  projectId: "eduverse-c818a", // Use your Firebase project ID
 });
 
-// Get a reference to the Firestore database
 const db = admin.firestore();
-// Point the SDK to your local emulator
-db.settings({
-  host: "127.0.0.1:8070", // This is the default Firestore emulator port
-  ssl: false,
-});
 
-// --- YOUR SAMPLE DATA GOES HERE ---
 const sampleData = {
   courses: [
     {
-      id: "physics_10", // We'll use custom IDs for easier linking
+      id: "physics_10",
       title: "Class 10 Physics",
       description: "An introduction to the fundamental principles of physics.",
       subject: "Physics",
@@ -34,7 +27,7 @@ const sampleData = {
   ],
   lessons: [
     {
-      courseId: "physics_10", // Link to the Physics course
+      courseId: "physics_10",
       title: "Chapter 1: Electricity",
       content: "This chapter covers circuits, voltage, and current...",
       order: 1,
@@ -48,7 +41,6 @@ const sampleData = {
   ],
   quizzes: [
     {
-      // We will link this quiz to the 'Electricity' lesson after it's created
       title: "Electricity Basics Quiz",
       questions: [
         {
@@ -72,26 +64,52 @@ async function seedDatabase() {
 
   // Seed Courses
   for (const course of sampleData.courses) {
-    await db.collection("courses").doc(course.id).set(course);
-    console.log(`- Created course: ${course.title}`);
-  }
-
-  // Seed Lessons
-  let electricityLessonId;
-  for (const lesson of sampleData.lessons) {
-    const newLessonRef = await db.collection("lessons").add(lesson);
-    console.log(`- Created lesson: ${lesson.title}`);
-    // Save the ID of the electricity lesson so we can link the quiz to it
-    if (lesson.title.includes("Electricity")) {
-      electricityLessonId = newLessonRef.id;
+    const docRef = db.collection("courses").doc(course.id);
+    const docSnapshot = await docRef.get();
+    if (!docSnapshot.exists) {
+      await docRef.set(course);
+      console.log(`- Created course: ${course.title}`);
+    } else {
+      console.log(`- Course already exists: ${course.title}`);
     }
   }
 
-  // Seed Quizzes and link to the lesson
+  // Seed Lessons
+  for (const lesson of sampleData.lessons) {
+    const lessonId = lesson.title.replace(/\s+/g, "_").toLowerCase();
+    const docRef = db.collection("lessons").doc(lessonId);
+    const docSnapshot = await docRef.get();
+    if (!docSnapshot.exists) {
+      await docRef.set(lesson);
+      console.log(`- Created lesson: ${lesson.title}`);
+    } else {
+      console.log(`- Lesson already exists: ${lesson.title}`);
+    }
+  }
+
+  // Seed Quizzes
   for (const quiz of sampleData.quizzes) {
-    quiz.lessonId = electricityLessonId; // Add the reference
-    await db.collection("quizzes").add(quiz);
-    console.log(`- Created quiz: ${quiz.title}`);
+    const quizId = quiz.title.replace(/\s+/g, "_").toLowerCase();
+    const docRef = db.collection("quizzes").doc(quizId);
+    const docSnapshot = await docRef.get();
+    if (!docSnapshot.exists) {
+      await docRef.set(quiz);
+      console.log(`- Created quiz: ${quiz.title}`);
+    } else {
+      console.log(`- Quiz already exists: ${quiz.title}`);
+    }
+  }
+
+  // Seed Experiments
+  for (const experiment of dbData) {
+    const docRef = db.collection("experiments").doc(String(experiment.id));
+    const docSnapshot = await docRef.get();
+    if (!docSnapshot.exists) {
+      await docRef.set(experiment);
+      console.log(`- Created experiment: ${experiment.title || experiment.id}`);
+    } else {
+      console.log(`- Experiment already exists: ${experiment.title || experiment.id}`);
+    }
   }
 
   console.log("Database seeding completed successfully!");
