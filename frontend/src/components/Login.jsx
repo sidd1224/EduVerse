@@ -7,12 +7,16 @@ export default function Login() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    const email = e.target[0].value;
+    const input = e.target[0].value;
     const password = e.target[1].value;
 
     const students = JSON.parse(localStorage.getItem("students")) || [];
+
+    // login using either email OR name
     const student = students.find(
-      (s) => s.email === email && s.password === password
+      (s) =>
+        (s.email === input || s.name === input) &&
+        s.password === password
     );
 
     if (student) {
@@ -20,7 +24,7 @@ export default function Login() {
       alert("✅ Login successful!");
       navigate("/dashboard");
     } else {
-      alert("❌ User not found! Please register first.");
+      alert("❌ Invalid credentials. Please register first.");
     }
   };
 
@@ -58,7 +62,7 @@ export default function Login() {
           </div>
         </div>
 
-        {/* RIGHT LOGIN FORM WITH SLIDE ANIMATION */}
+        {/* RIGHT LOGIN FORM */}
         <motion.div
           initial={{ x: 500, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -71,19 +75,27 @@ export default function Login() {
               <input
                 type="text"
                 placeholder="Username or email"
+                required
                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <input
                 type="password"
                 placeholder="Password"
+                required
                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center space-x-2">
-                  <input type="checkbox" className="form-checkbox text-purple-600" />
+                  <input
+                    type="checkbox"
+                    className="form-checkbox text-purple-600"
+                  />
                   <span>Remember me</span>
                 </label>
-                <Link to="/forgot-password" className="text-purple-600 hover:underline">
+                <Link
+                  to="/forgot-password"
+                  className="text-purple-600 hover:underline"
+                >
                   Forgot password?
                 </Link>
               </div>

@@ -12,20 +12,35 @@ export default function Register() {
 
     const name = e.target[0].value;
     const email = e.target[1].value;
-    const password = e.target[2].value;
+    const studentClass = e.target[2].value;
+    const password = e.target[3].value;
+    const confirmPassword = e.target[4].value;
+
+    if (password !== confirmPassword) {
+      alert("❌ Passwords do not match!");
+      setLoading(false);
+      return;
+    }
 
     setTimeout(() => {
       setLoading(false);
 
       let students = JSON.parse(localStorage.getItem("students")) || [];
-      const newStudent = { name, email, password, grade: "8th Grade" };
+
+      // check duplicate email
+      if (students.find((s) => s.email === email)) {
+        alert("⚠️ Email already exists! Please log in.");
+        return;
+      }
+
+      const newStudent = { name, email, password, class: studentClass };
       students.push(newStudent);
 
       localStorage.setItem("students", JSON.stringify(students));
 
       alert("🎉 Account Created!");
       navigate("/login");
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -62,7 +77,7 @@ export default function Register() {
           </div>
         </div>
 
-        {/* RIGHT REGISTER FORM WITH SLIDE ANIMATION */}
+        {/* RIGHT REGISTER FORM */}
         <motion.div
           initial={{ x: 500, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -83,6 +98,12 @@ export default function Register() {
               <input
                 type="email"
                 placeholder="Email address"
+                required
+                className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="text"
+                placeholder="Enter your class"
                 required
                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
