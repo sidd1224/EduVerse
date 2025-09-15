@@ -16,7 +16,8 @@ const VLabDashboard = () => {
     setLoading(true);
     setError(null);
 
-    fetch(`/api/experiments?class=${currentClass}`)
+    // Updated to use direct Firebase function URL instead of proxy
+    fetch(`http://127.0.0.1:5008/eduverse-c818a/us-central1/vlab/experiments?class=${currentClass}`)
       .then(response => {
         if (!response.ok) {
           return response.text().then(text => { throw new Error(text); });
@@ -79,9 +80,9 @@ const VLabDashboard = () => {
                   <li key={exp.id} className="flex justify-between items-center p-3 rounded-md hover:bg-gray-100 transition-colors duration-200">
                     <span className="text-lg text-gray-800">{exp.title}</span>
                     <div className="space-x-2">
-                      {/* These match your Express server routes */}
+                      {/* Updated to use direct Firebase function URLs */}
                       <a
-                        href={`/vlab/run/${exp.id}`}
+                        href={`http://127.0.0.1:5008/eduverse-c818a/us-central1/vlab/run/${exp.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition"
@@ -89,7 +90,7 @@ const VLabDashboard = () => {
                         Run
                       </a>
                       <a
-                        href={`/vlab/theory/${exp.id}`}
+                        href={`http://127.0.0.1:5008/eduverse-c818a/us-central1/vlab/theory/${exp.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition"

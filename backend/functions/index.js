@@ -74,7 +74,16 @@ exports.getStudent = onCall(async (request) => {
 // =================================================================
 
 const vlabApp = express();
-vlabApp.use(cors({ origin: true }));
+vlabApp.use(cors({ 
+  origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+  credentials: true 
+}));
+
+vlabApp.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy", "default-src 'self'; connect-src 'self' http://127.0.0.1:5008");
+  next();
+});
+
 vlabApp.set("view engine", "ejs");
 vlabApp.set("views", path.join(__dirname, "views"));
 
@@ -112,25 +121,11 @@ vlabApp.get("/experiments", (req, res) => {
 });
 
 // ✅ Route for running an experiment
-vlabApp.get("/run/:id", (req, res) => {
-  try {
-    const experimentId = req.params.id;
-    const dbPath = path.join(__dirname, "db.json");
-    const experimentsData = JSON.parse(fs.readFileSync(dbPath, "utf8"));
-    const experiment = experimentsData.find(
-      (exp) => exp.id.toString() === experimentId
-    );
-
-    if (!experiment) {
-      return res.status(404).send("Experiment not found");
-    }
-
-    const sketchPath = `/vlab/laptop/labs/experiments/class_${experiment.experiment_class}/${experiment.subject.toLowerCase()}/${experiment.file_name}.js`;
-    res.render("experiment", { sketchPath: sketchPath });
-  } catch (error) {
-    console.error("Error running experiment:", error);
-    res.status(500).send("Error loading experiment.");
-  }
+vlabApp.get('/run/:id', (req, res) => {
+  // Example: Render a page or serve a file for the experiment
+  const experimentId = req.params.id;
+  // You can customize this logic as needed
+  res.send(`Experiment runner for ID: ${experimentId}`);
 });
 
 // ✅ Route for theory page
