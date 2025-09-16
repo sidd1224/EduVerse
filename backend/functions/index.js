@@ -89,9 +89,10 @@ app.use(cors({ origin: true }));
 
 // Serve static experiment files
 app.use(
-  "/vlab/laptop/labs/experiments",
+  "/laptop/labs/experiments",
   express.static(path.join(__dirname, "public/vlab/laptop/labs/experiments"))
 );
+
 
 
 // Helper to authenticate and fetch student
@@ -314,45 +315,38 @@ app.get("/api/experiments/:subject/:classId", async (req, res) => {
 });
 
 
-// ✅ UPDATED: Run experiment route (uses Firestore)
 app.get("/api/run/:id", async (req, res) => {
-    try {
-        const experimentId = req.params.id;
-        
-        console.log(`Loading experiment for run: ${experimentId}`);
-        
-        const doc = await db.collection('experiments').doc(experimentId).get();
-        
-        if (!doc.exists) {
-            console.log(`Experiment not found: ${experimentId}`);
-            return res.status(404).send("Experiment not found");
-        }
-        
-        const experiment = doc.data();
-        console.log(`Found experiment: ${experiment.title || experimentId}`);
-        
-        // Use consistent field names
-        const experimentClass = experiment.class || experiment.experiment_class;
-        const sketchPath = `/vlab/laptop/labs/experiments/class_${experimentClass}/${experiment.subject.toLowerCase()}/${experiment.sketch_name}.js`;
-        
-        // Check if you have EJS rendering setup
-        if (res.render) {
-            res.render("experiment", { sketchPath: sketchPath });
-        } else {
-            // Return JSON response if no EJS setup
-            res.json({
-                success: true,
-                experiment: experiment,
-                sketchPath: sketchPath,
-                message: "Experiment loaded successfully"
-            });
-        }
-        
-    } catch (error) {
-        console.error("Error running experiment:", error);
-        res.status(500).send("Error loading experiment.");
+  try {
+    const experimentId = req.params.id;
+    console.log(`Loading experiment for run: ${experimentId}`);
+
+    const doc = await db.collection('experiments').doc(experimentId).get();
+    if (!doc.exists) {
+      console.log(`Experiment not found: ${experimentId}`);
+      return res.status(404).send("Experiment not found");
     }
+
+    const experiment = doc.data();
+    console.log(`Found experiment: ${experiment.title || experimentId}`);
+
+    const experimentClass = experiment.class || experiment.experiment_class;
+   const sketchPath = `/laptop/labs/experiments/class_${experimentClass}/${experiment.subject.toLowerCase()}/${experiment.sketch_name}.js`;
+
+
+    // Always return JSON
+    res.json({
+      success: true,
+      experiment,
+      sketchPath,
+      message: "Experiment loaded successfully"
+    });
+
+  } catch (error) {
+    console.error("Error running experiment:", error);
+    res.status(500).send("Error loading experiment.");
+  }
 });
+
 
 // ✅ UPDATED: Theory route (uses Firestore)
 app.get("/api/theory/:id", async (req, res) => {

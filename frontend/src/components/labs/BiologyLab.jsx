@@ -14,77 +14,94 @@ const BiologyLab = () => {
   useEffect(() => {
     if (!classId) return;
 
-    fetch(`${API_BASE}/api/experiments/Biology/${classId}`)
-      .then((res) => {
-        if (!res.ok) return res.text().then((text) => { throw new Error(text); });
-        return res.json();
-      })
-      .then((data) => {
+    const fetchExperiments = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/experiments/Biology/${classId}`);
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || "Failed to fetch experiments");
+        }
+        const data = await res.json();
         setExperiments(data);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
+        console.error("Error fetching experiments:", err);
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchExperiments();
   }, [classId]);
 
-  // Run experiment in a new window using dynamic scripts
-  const handleRun = (id) => {
-    fetch(`${API_BASE}/api/run/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.success) {
-          alert("Failed to load experiment.");
-          return;
-        }
+  // Run experiment in a new window
+  const handleRun = async (id) => {
+    const newWindow = window.open("", "_blank");
+    newWindow.document.write("<p style='text-align:center;margin-top:50px;'>Loading experiment...</p>");
+    newWindow.document.body.style.margin = "0";
+    newWindow.document.body.style.overflow = "hidden";
 
-        const newWindow = window.open("", "_blank");
+    try {
+      const res = await fetch(`${API_BASE}/api/run/${id}`);
+      const data = await res.json();
 
-        // Load p5.js dynamically
-        const p5Script = newWindow.document.createElement("script");
-        p5Script.src = "https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js";
-        p5Script.onload = () => {
-          // Load user's sketch as module
-          const sketchScript = newWindow.document.createElement("script");
-          sketchScript.type = "module";
-          sketchScript.src = data.sketchPath;
-          newWindow.document.body.appendChild(sketchScript);
+      if (!data.success) {
+        newWindow.close();
+        alert("Failed to load experiment.");
+        return;
+      }
+
+      // Load p5.js dynamically
+      const p5Script = newWindow.document.createElement("script");
+      p5Script.src = "https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js";
+      p5Script.onload = () => {
+        const sketchScript = newWindow.document.createElement("script");
+        sketchScript.type = "module";
+        sketchScript.src = `${API_BASE}${data.sketchPath}`;
+        sketchScript.onerror = () => {
+          console.error("Failed to load experiment sketch:", data.sketchPath);
+          alert("Failed to load experiment sketch.");
+          newWindow.close();
         };
-
-        newWindow.document.head.appendChild(p5Script);
-        newWindow.document.body.style.margin = "0";
-        newWindow.document.body.style.overflow = "hidden";
-      })
-      .catch((err) => {
-        console.error("Run failed:", err);
-        alert("Failed to run experiment.");
-      });
+        newWindow.document.body.appendChild(sketchScript);
+      };
+      p5Script.onerror = () => {
+        console.error("Failed to load p5.js library");
+        alert("Failed to load p5.js library.");
+        newWindow.close();
+      };
+      newWindow.document.head.appendChild(p5Script);
+    } catch (err) {
+      console.error("Run failed:", err);
+      alert("Failed to run experiment.");
+      newWindow.close();
+    }
   };
 
-  // Fetch theory and display in alert (can upgrade to modal later)
-  const handleTheory = (id) => {
-    fetch(`${API_BASE}/api/theory/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.success) {
-          alert("Failed to load theory.");
-          return;
-        }
+  // Fetch theory and display in modal or alert
+  const handleTheory = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/theory/${id}`);
+      const data = await res.json();
 
-        const exp = data.experiment;
-        alert(
-          `🧪 ${exp.title}\n\n📋 Materials Required:\n${exp.materials_required}\n\n📝 Procedure:\n${exp.procedure}\n\n📖 Theory:\n${exp.theory}`
-        );
-      })
-      .catch((err) => {
-        console.error("Theory fetch failed:", err);
-        alert("Failed to fetch theory.");
-      });
+      if (!data.success) {
+        alert("Failed to load theory.");
+        return;
+      }
+
+      const exp = data.experiment;
+      alert(
+        `🧪 ${exp.title}\n\n📋 Materials Required:\n${exp.materials_required}\n\n📝 Procedure:\n${exp.procedure}\n\n📖 Theory:\n${exp.theory}`
+      );
+    } catch (err) {
+      console.error("Theory fetch failed:", err);
+      alert("Failed to fetch theory.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-blue-100 relative flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-blue-100 relative flex flex-col items-center justify-center px-4 py-10">
+      {/* Back button */}
       <button
         onClick={() => navigate("/dashboard/virtuallab")}
         className="absolute top-4 right-4 bg-white/40 backdrop-blur-sm px-3 py-1 rounded-lg shadow text-sm font-medium text-blue-700 hover:bg-white/70 transition flex items-center space-x-1"
@@ -101,7 +118,11 @@ const BiologyLab = () => {
       {loading && <div>Loading experiments...</div>}
       {error && <div className="text-red-500">Error: {error}</div>}
 
-      {!loading && !error && (
+      {!loading && !error && experiments.length === 0 && (
+        <div className="text-gray-500">No experiments found for this class.</div>
+      )}
+
+      {!loading && !error && experiments.length > 0 && (
         <ul className="mt-4 space-y-4 w-full max-w-lg">
           {experiments.map((exp) => (
             <li
