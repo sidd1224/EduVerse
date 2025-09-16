@@ -12,6 +12,7 @@ import Quiz from "./components/Quiz";
 
 // ✅ Import all lab components from the labs folder via index.js
 import { VirtualLab, PhysicsLab, ChemistryLab, BiologyLab } from "./components/labs";
+import LessonsDashboard from "./components/LessonsDashboard.jsx";
 
 function App() {
   return (
@@ -38,6 +39,14 @@ function App() {
 
         {/* Quiz */}
         <Route path="/dashboard/quiz" element={<Quiz />} />
+
+        <Route path="/dashboard/lessons">
+           <Route index element={<LessonsDashboard />} />
+           <Route path=":classId" element={<LessonsDashboard />} />
+            <Route path=":classId/:subject" element={<LessonsDashboard />} />
+           <Route path=":classId/:subject/:chapter" element={<LessonsDashboard />} />
+        </Route>
+
       </Routes>
     </Router>
   );

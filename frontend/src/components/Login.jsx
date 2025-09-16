@@ -1,36 +1,92 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
+import { auth, functions } from "../firebaseConfig";
 
 export default function Login() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const input = e.target[0].value;
+    setLoading(true);
+    setError("");
+
+    const email = e.target[0].value;
     const password = e.target[1].value;
 
-    const students = JSON.parse(localStorage.getItem("students")) || [];
+    try {
+      console.log("Attempting login:", email);
 
-    // login using either email OR name
-    const student = students.find(
-      (s) =>
-        (s.email === input || s.name === input) &&
-        s.password === password
-    );
+      // ✅ Step 1: Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("User signed in:", user.uid);
 
-    if (student) {
-      localStorage.setItem("student", JSON.stringify(student));
-      alert("✅ Login successful!");
-      navigate("/dashboard");
-    } else {
-      alert("❌ Invalid credentials. Please register first.");
+      // ✅ Step 2: Fetch student profile
+      try {
+        const getStudent = httpsCallable(functions, "getStudent");
+        const studentResult = await getStudent({ uid: user.uid });
+        const studentData = studentResult.data;
+
+        // Save to localStorage
+        localStorage.setItem(
+          "student",
+          JSON.stringify({
+            uid: user.uid,
+            name: studentData.name,
+            email: studentData.email,
+            student_class: studentData.student_class,
+            ...studentData
+          })
+        );
+
+        console.log("Student data loaded:", studentData);
+        navigate("/dashboard");
+
+      } catch (studentError) {
+        console.error("Error fetching student data:", studentError);
+
+        // Fallback: redirect to profile setup if no doc
+        localStorage.setItem(
+          "student",
+          JSON.stringify({
+            uid: user.uid,
+            name: user.displayName || "Student",
+            email: user.email,
+            student_class: null
+          })
+        );
+
+        // 👇 Instead of dashboard, send to setup
+        navigate("/dashboard/lessons");
+      }
+
+    } catch (error) {
+      console.error("Login error:", error);
+
+      let errorMessage = "❌ Login failed. Please try again.";
+      if (error.code === "auth/user-not-found") {
+        errorMessage = "❌ User not found! Please register first.";
+      } else if (error.code === "auth/wrong-password") {
+        errorMessage = "❌ Incorrect password!";
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "❌ Invalid email!";
+      } else if (error.code === "auth/too-many-requests") {
+        errorMessage = "❌ Too many failed attempts. Try later.";
+      }
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* BACKGROUND */}
+      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-400 overflow-hidden">
         <svg
           className="absolute top-20 left-0 w-full opacity-30 animate-[moveWave_12s_linear_infinite]"
@@ -43,9 +99,9 @@ export default function Login() {
         </svg>
       </div>
 
-      {/* MAIN CARD */}
+      {/* Card */}
       <div className="relative z-10 flex w-full max-w-6xl min-h-screen md:min-h-[600px] bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* LEFT IMAGE */}
+        {/* Left image */}
         <div
           className="hidden md:flex md:w-1/2 bg-cover bg-center relative"
           style={{
@@ -56,13 +112,11 @@ export default function Login() {
           <div className="absolute inset-0 bg-purple-900/70" />
           <div className="relative z-10 flex flex-col justify-center items-center p-12 text-white text-center">
             <h1 className="text-4xl font-bold mb-4">Welcome back!</h1>
-            <p className="text-lg max-w-sm">
-              You can sign in to access your existing account.
-            </p>
+            <p className="text-lg max-w-sm">Sign in to access your account.</p>
           </div>
         </div>
 
-        {/* RIGHT LOGIN FORM */}
+        {/* Right login form */}
         <motion.div
           initial={{ x: 500, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -71,10 +125,21 @@ export default function Login() {
         >
           <div className="w-full max-w-md p-8">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Sign In</h2>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
+
             <form className="space-y-4" onSubmit={handleLogin}>
               <input
-                type="text"
-                placeholder="Username or email"
+                type="email"
+                placeholder="Email address"
                 required
                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
@@ -84,27 +149,34 @@ export default function Login() {
                 required
                 className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
+
               <div className="flex items-center justify-between text-sm">
                 <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    className="form-checkbox text-purple-600"
-                  />
+                  <input type="checkbox" className="form-checkbox text-purple-600" />
                   <span>Remember me</span>
                 </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-purple-600 hover:underline"
-                >
+                <Link to="/forgot-password" className="text-purple-600 hover:underline">
                   Forgot password?
                 </Link>
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-700 text-white py-3 rounded-lg hover:opacity-90 transition"
+                disabled={loading}
+                className={`w-full py-3 rounded-lg transition-all duration-200 ${
+                  loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-purple-500 to-purple-700 hover:opacity-90"
+                } text-white`}
               >
-                Sign In
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Signing in...
+                  </div>
+                ) : (
+                  "Sign In"
+                )}
               </button>
             </form>
 
