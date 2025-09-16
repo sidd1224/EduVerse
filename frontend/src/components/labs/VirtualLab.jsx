@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const VirtualLab = () => {
   const navigate = useNavigate();
-  const [experiments, setExperiments] = useState([]);
+  const [experiments, setExperiments] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -13,7 +13,7 @@ const VirtualLab = () => {
     fetch("http://127.0.0.1:5008/eduverse-c818a/us-central1/vlab/api/experiments")
       .then((response) => response.json())
       .then((data) => {
-        setExperiments(data); // array of experiments
+        setExperiments(data.experimentsBySubject || {}); // ✅ use correct field
         setLoading(false);
       })
       .catch(() => {
@@ -29,13 +29,14 @@ const VirtualLab = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
-  // 🔹 Group experiments by subject
-  const biologyExperiments = experiments.filter((exp) => exp.subject === "Biology");
-  const chemistryExperiments = experiments.filter((exp) => exp.subject === "Chemistry");
-  const physicsExperiments = experiments.filter((exp) => exp.subject === "Physics");
+  // ✅ Use experiments by subject safely
+  const biologyExperiments = experiments.Biology || [];
+  const chemistryExperiments = experiments.Chemistry || [];
+  const physicsExperiments = experiments.Physics || [];
 
-  // 🔹 Pick one biology classId dynamically (e.g., first available experiment)
-  const biologyClassId = biologyExperiments.length > 0 ? biologyExperiments[0].classId : null;
+  // Pick one biology classId dynamically
+  const biologyClassId =
+    biologyExperiments.length > 0 ? biologyExperiments[0].experiment_class : null;
 
   return (
     <div className="min-h-screen bg-purple-100 py-10">
@@ -57,7 +58,6 @@ const VirtualLab = () => {
       {/* Subjects Grid */}
       <div className="bg-white p-8 shadow-lg w-full rounded-none">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
           {/* Biology */}
           <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
             <img

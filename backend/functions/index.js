@@ -87,6 +87,13 @@ exports.getStudent = onCall(async (request) => {
 const app = express();
 app.use(cors({ origin: true }));
 
+// Serve static experiment files
+app.use(
+  "/vlab/laptop/labs/experiments",
+  express.static(path.join(__dirname, "public/vlab/laptop/labs/experiments"))
+);
+
+
 // Helper to authenticate and fetch student
 const getUserStudentData = async (req) => {
     const token = req.headers.authorization?.replace("Bearer ", "");
@@ -274,6 +281,38 @@ app.get("/api/experiments", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch experiments from database." });
     }
 });
+// ✅ New route: fetch experiments by subject and class
+app.get("/api/experiments/:subject/:classId", async (req, res) => {
+  try {
+    const { subject, classId } = req.params;
+    console.log(`Fetching experiments for subject: ${subject}, class: ${classId}`);
+
+    const snapshot = await db.collection("experiments")
+      .where("subject", "==", subject)
+      .where("class", "==", classId) // your Firestore field must be consistent ("class" or "experiment_class")
+      .get();
+
+    if (snapshot.empty) {
+      console.log("No experiments found for this subject & class");
+      return res.json([]);
+    }
+
+    const experiments = [];
+    snapshot.forEach((doc) => {
+      experiments.push({
+        id: doc.id,
+        ...doc.data(),
+        experiment_class: doc.data().class || doc.data().experiment_class,
+      });
+    });
+
+    res.json(experiments);
+  } catch (error) {
+    console.error("Error fetching subject experiments:", error);
+    res.status(500).json({ error: "Failed to fetch experiments." });
+  }
+});
+
 
 // ✅ UPDATED: Run experiment route (uses Firestore)
 app.get("/api/run/:id", async (req, res) => {
