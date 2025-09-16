@@ -86,11 +86,16 @@ exports.getStudent = onCall(async (request) => {
 // =================================================================
 const app = express();
 app.use(cors({ origin: true }));
+app.set("view engine", "ejs");
 
-// Serve static experiment files
+// ✅ Set the views directory
+app.set("views", path.join(__dirname, "views"));
+
+// Enable CORS if needed
+app.use(cors({ origin: true }));
 app.use(
-  "/laptop/labs/experiments",
-  express.static(path.join(__dirname, "public/vlab/laptop/labs/experiments"))
+  "/labs/experiments",
+  express.static(path.join(__dirname, "public/labs/experiments"))
 );
 
 
@@ -312,15 +317,15 @@ app.get("/api/experiments/:subject/:classId", async (req, res) => {
     console.error("Error fetching subject experiments:", error);
     res.status(500).json({ error: "Failed to fetch experiments." });
   }
-});
-
-
+});// ✅ UPDATED: Run experiment route (returns Hosting-relative path)
 app.get("/api/run/:id", async (req, res) => {
   try {
     const experimentId = req.params.id;
+
     console.log(`Loading experiment for run: ${experimentId}`);
 
-    const doc = await db.collection('experiments').doc(experimentId).get();
+    const doc = await db.collection("experiments").doc(experimentId).get();
+
     if (!doc.exists) {
       console.log(`Experiment not found: ${experimentId}`);
       return res.status(404).send("Experiment not found");
@@ -329,24 +334,22 @@ app.get("/api/run/:id", async (req, res) => {
     const experiment = doc.data();
     console.log(`Found experiment: ${experiment.title || experimentId}`);
 
+    // ✅ Always return Hosting-relative path
     const experimentClass = experiment.class || experiment.experiment_class;
-   const sketchPath = `/laptop/labs/experiments/class_${experimentClass}/${experiment.subject.toLowerCase()}/${experiment.sketch_name}.js`;
+    const sketchPath = `/labs/experiments/class_${experimentClass}/${experiment.subject.toLowerCase()}/${experiment.sketch_name}.js`;
 
-
-    // Always return JSON
+    // Force JSON (so frontend always works with fetch)
     res.json({
       success: true,
-      experiment,
-      sketchPath,
-      message: "Experiment loaded successfully"
+      experiment: experiment,
+      sketchPath: sketchPath, // relative, frontend adds Hosting_BASE
+      message: "Experiment loaded successfully",
     });
-
   } catch (error) {
     console.error("Error running experiment:", error);
-    res.status(500).send("Error loading experiment.");
+    res.status(500).json({ success: false, message: "Error loading experiment." });
   }
 });
-
 
 // ✅ UPDATED: Theory route (uses Firestore)
 app.get("/api/theory/:id", async (req, res) => {
@@ -536,5 +539,8 @@ app.get("/lessons/:class/:subject/textbook/:filename", async (req, res) => {
   }
 });
 
+app.get("/api/test", (req, res) => {
+  res.send("Test OK");
+});
 
 exports.vlab = functions.https.onRequest(app);

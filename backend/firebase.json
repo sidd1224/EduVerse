@@ -16,6 +16,12 @@
           }
         ]
       }
+    ],
+    "rewrites": [
+      {
+        "source": "/vlab/**",
+        "function": "vlab"
+      }
     ]
   },
   "firestore": {
@@ -43,4 +49,3 @@
     }
   }
 }
-
