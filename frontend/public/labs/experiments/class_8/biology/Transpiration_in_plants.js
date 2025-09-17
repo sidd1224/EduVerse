@@ -12,12 +12,12 @@ new p5((p) => {
   let isRunning = true;
 
   p.preload = () => {
-    font = p.loadFont('/labs/fonts/myFont.ttf');
- // make sure this file is in public folder
+    font = p.loadFont("/labs/fonts/myFont.ttf"); 
   };
 
   p.setup = () => {
-    p.createCanvas(1000, 600, p.WEBGL);
+    // ✅ Full window canvas
+    p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
 
     lightSlider = p.createSlider(0, 100, 50);
     lightSlider.position(20, 20);
@@ -71,8 +71,12 @@ new p5((p) => {
     drawGraph2D();
   };
 
-  // ---------------- helpers ----------------
+  // ✅ Resize handler
+  p.windowResized = () => {
+    p.resizeCanvas(p.windowWidth, p.windowHeight);
+  };
 
+  // ---------------- helpers ----------------
   function resetSimulation() {
     droplets = [];
     dropletCount = 0;
@@ -205,18 +209,18 @@ new p5((p) => {
     let lightVal = lightSlider.value();
     let elapsed = ((p.millis() - startTime) / 1000).toFixed(1);
 
-    p.text("Light Intensity: " + lightVal + "%", -280, -240);
-    p.text("Droplet Formation Rate: " + lightVal + "%", -280, -220);
-    p.text("Total Droplets Formed: " + dropletCount, -280, -200);
-    p.text("Time Elapsed: " + elapsed + "s", -280, -180);
-    p.text("Experiment: Transpiration in Plants", -100, 240);
+    p.text("Light Intensity: " + lightVal + "%", -p.windowWidth/2 + 20, -p.windowHeight/2 + 40);
+    p.text("Droplet Formation Rate: " + lightVal + "%", -p.windowWidth/2 + 20, -p.windowHeight/2 + 60);
+    p.text("Total Droplets Formed: " + dropletCount, -p.windowWidth/2 + 20, -p.windowHeight/2 + 80);
+    p.text("Time Elapsed: " + elapsed + "s", -p.windowWidth/2 + 20, -p.windowHeight/2 + 100);
+    p.text("Experiment: Transpiration in Plants", 0, p.windowHeight/2 - 40);
   }
 
   function drawGraph2D() {
     p.push();
     p.resetMatrix();
     p.camera();
-    p.translate(300, 70);
+    p.translate(p.windowWidth/2 - 350, 100);
 
     p.stroke(0);
     p.noFill();
@@ -244,7 +248,7 @@ new p5((p) => {
   function drawSun(intensity) {
     p.push();
     let sunBrightness = p.map(intensity, 0, 100, 50, 255);
-    p.translate(-300, -200, -300);
+    p.translate(-p.windowWidth/2 + 100, -p.windowHeight/2 + 100, -300);
     p.fill(255, 255, 0, sunBrightness);
     p.noStroke();
     p.sphere(30);
@@ -256,7 +260,7 @@ new p5((p) => {
     p.stroke(255, 255, 0, p.map(intensity, 0, 100, 50, 100));
     p.strokeWeight(2);
     for (let i = -5; i <= 5; i++) {
-      p.line(-300, -200, -300, i * 20, 100, 0);
+      p.line(-p.windowWidth/2 + 100, -p.windowHeight/2 + 100, -300, i * 20, 100, 0);
     }
     p.pop();
   }
