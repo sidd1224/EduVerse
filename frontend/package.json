@@ -11,6 +11,7 @@
     "framer-motion": "^11.0.0",
     "http-proxy-middleware": "^3.0.5",
     "lucide-react": "^0.544.0",
+    "p5": "^2.0.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intersection-observer": "^9.13.0",

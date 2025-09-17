@@ -1,270 +1,272 @@
-let dropletTimer = 0;
-let droplets = [];
-let dropletCount = 0;
-let font;
-let lightSlider;
-let resetButton;
-let stopButton;
+new p5((p) => {
+  let dropletTimer = 0;
+  let droplets = [];
+  let dropletCount = 0;
+  let font;
+  let lightSlider;
+  let resetButton;
+  let stopButton;
 
-let graphData = [];
-let startTime;
-let isRunning = true;
+  let graphData = [];
+  let startTime;
+  let isRunning = true;
 
-function preload() {
-  font = loadFont('/static/labs/fonts/myFont.ttf');  // Ensure the correct path
-}
+  p.preload = () => {
+    font = p.loadFont('/labs/fonts/myFont.ttf');
+ // make sure this file is in public folder
+  };
 
-function setup() {
-  createCanvas(windowWidth, windowHeight, WEBGL);
+  p.setup = () => {
+    p.createCanvas(1000, 600, p.WEBGL);
 
-  lightSlider = createSlider(0, 100, 50);
-  lightSlider.position(20, 20);
-  lightSlider.style('width', '200px');
+    lightSlider = p.createSlider(0, 100, 50);
+    lightSlider.position(20, 20);
+    lightSlider.style("width", "200px");
 
-  resetButton = createButton("Reset");
-  resetButton.position(230, 20);
-  resetButton.mousePressed(resetSimulation);
+    resetButton = p.createButton("Reset");
+    resetButton.position(230, 20);
+    resetButton.mousePressed(resetSimulation);
 
-  stopButton = createButton("Stop");
-  stopButton.position(300, 20);
-  stopButton.mousePressed(toggleSimulation);
+    stopButton = p.createButton("Stop");
+    stopButton.position(300, 20);
+    stopButton.mousePressed(toggleSimulation);
 
-  textFont(font);
-  startTime = millis();
-}
+    p.textFont(font);
+    startTime = p.millis();
+  };
 
-function draw() {
-  background(200, 230, 255);
-  orbitControl();
-  directionalLight(255, 255, 255, 0.5, 1, -0.5);
-  ambientLight(100);
+  p.draw = () => {
+    p.background(200, 230, 255);
+    p.orbitControl();
+    p.directionalLight(255, 255, 255, 0.5, 1, -0.5);
+    p.ambientLight(100);
 
-  let lightVal = lightSlider.value();
+    let lightVal = lightSlider.value();
 
-  drawSun(lightVal);
-  drawSunRays(lightVal);
-  drawGlassBox();
-  drawPot();
-  drawPlant();
-  drawPlasticCover();
-  drawDroplets();
-  drawLabels();
+    drawSun(lightVal);
+    drawSunRays(lightVal);
+    drawGlassBox();
 
-  if (isRunning) {
-    let rate1 = lightVal / 10;
-    if (rate1 > 0 && millis() - dropletTimer > 1000 / rate1) {
-      let x = random(-20, 20);
-      let y = random(-80, -30);
-      droplets.push({ x, y, z: random(-20, 20), size: 3 });
-      dropletCount++;
-      dropletTimer = millis();
+    drawPot();
+    drawPlant();
+    drawPlasticCover();
+    drawDroplets();
+    drawLabels();
 
-      graphData.push({ time: millis() / 1000, count: dropletCount });
-      if (graphData.length > 100) graphData.shift();
+    if (isRunning) {
+      let rate1 = lightVal / 10;
+      if (rate1 > 0 && p.millis() - dropletTimer > 1000 / rate1) {
+        let x = p.random(-20, 20);
+        let y = p.random(-80, -30);
+        droplets.push({ x, y, z: p.random(-20, 20), size: 3 });
+        dropletCount++;
+        dropletTimer = p.millis();
+
+        graphData.push({ time: p.millis() / 1000, count: dropletCount });
+        if (graphData.length > 100) graphData.shift();
+      }
     }
+
+    displayText2D();
+    drawGraph2D();
+  };
+
+  // ---------------- helpers ----------------
+
+  function resetSimulation() {
+    droplets = [];
+    dropletCount = 0;
+    graphData = [];
+    startTime = p.millis();
+    isRunning = true;
+    stopButton.html("Stop");
   }
 
-  displayText2D();
-  drawGraph2D();
-}
-
-function resetSimulation() {
-  droplets = [];
-  dropletCount = 0;
-  graphData = [];
-  startTime = millis();
-  isRunning = true;
-  stopButton.html("Stop");
-}
-
-function toggleSimulation() {
-  isRunning = !isRunning;
-  stopButton.html(isRunning ? "Stop" : "Resume");
-}
-
-function drawPot() {
-  push();
-  fill(139, 69, 19);
-  noStroke();
-  translate(0, 150, 0);
-  cylinder(60, 40);
-  pop();
-}
-
-function drawPlant() {
-  push();
-  translate(0, 80, 0);
-  fill(34, 139, 34);
-  cylinder(3, 60);
-
-  let angleFactor = map(lightSlider.value(), 0, 100, 0, PI / 18);
-
-  for (let i = 0; i < 6; i++) {
-    push();
-    let height = -i * 10;
-    translate(0, height, 0);
-
-    push();
-    rotateZ(PI / 6 + angleFactor);
-    translate(15, 0, 0);
-    cylinder(1, 20);
-    translate(0, -10, 0);
-    drawLeaf();
-    pop();
-
-    push();
-    rotateZ(-PI / 6 - angleFactor);
-    translate(-15, 0, 0);
-    cylinder(1, 20);
-    translate(0, -10, 0);
-    drawLeaf();
-    pop();
-
-    pop();
+  function toggleSimulation() {
+    isRunning = !isRunning;
+    stopButton.html(isRunning ? "Stop" : "Resume");
   }
-  pop();
-}
 
-function drawLeaf() {
-  fill(50, 205, 50);
-  beginShape();
-  vertex(0, 0, 0);
-  bezierVertex(5, -5, 10, -10, 0, -20);
-  bezierVertex(-10, -10, -5, -5, 0, 0);
-  endShape(CLOSE);
-}
-
-function drawPlasticCover() {
-  push();
-  noFill();
-  stroke(135, 206, 250, 100);
-  strokeWeight(1);
-  translate(0, 20, 0);
-  scale(1, 1.5, 1);
-  sphere(60, 24, 18);
-  pop();
-}
-
-function drawDroplets() {
-  push();
-  fill(173, 216, 230, 180);
-  noStroke();
-  for (let i = droplets.length - 1; i >= 0; i--) {
-    let d = droplets[i];
-    push();
-    translate(d.x, d.y, d.z);
-    sphere(d.size);
-    pop();
+  function drawPot() {
+    p.push();
+    p.fill(139, 69, 19);
+    p.noStroke();
+    p.translate(0, 150, 0);
+    p.cylinder(60, 40);
+    p.pop();
   }
-  pop();
-}
 
-function drawLabels() {
-  push();
-  fill(0);
-  textFont(font);
-  textSize(12);
-  textAlign(CENTER);
+  function drawPlant() {
+    p.push();
+    p.translate(0, 80, 0);
+    p.fill(34, 139, 34);
+    p.cylinder(3, 60);
 
-  push();
-  translate(0, 180, 70);
-  text("Pot", 0, 0);
-  pop();
+    let angleFactor = p.map(lightSlider.value(), 0, 100, 0, p.PI / 18);
 
-  push();
-  translate(70, 60, 70);
-  text("---------->Plant", 0, 0);
-  pop();
+    for (let i = 0; i < 6; i++) {
+      p.push();
+      let height = -i * 10;
+      p.translate(0, height, 0);
 
-  push();
-  translate(-90, -40, 70);
-  text("Plastic Cover --->", 0, 0);
-  pop();
+      p.push();
+      p.rotateZ(p.PI / 6 + angleFactor);
+      p.translate(15, 0, 0);
+      p.cylinder(1, 20);
+      p.translate(0, -10, 0);
+      drawLeaf();
+      p.pop();
 
-  push();
-  translate(70, -45, 30);
-  text("  --> Water Droplets", 0, 0);
-  pop();
+      p.push();
+      p.rotateZ(-p.PI / 6 - angleFactor);
+      p.translate(-15, 0, 0);
+      p.cylinder(1, 20);
+      p.translate(0, -10, 0);
+      drawLeaf();
+      p.pop();
 
-  pop();
-}
-
-function displayText2D() {
-  resetMatrix();
-  camera();
-  fill(0);
-  textSize(14);
-  textFont(font);
-  textAlign(LEFT);
-
-  let lightVal = lightSlider.value();
-  let elapsed = ((millis() - startTime) / 1000).toFixed(1);
-
-  text("Light Intensity: " + lightVal + "%", -700, -290);
-  text("Droplet Formation Rate: " + lightVal + "%", -700,-275);
-  text("Total Droplets Formed: " + dropletCount, -700,-260);
-  text("Time Elapsed: " + elapsed + "s", -700,-245);
-  text("Experiment: Transpiration in Plants", -120, 220);
-}
-
-function drawGraph2D() {
-  push();
-  resetMatrix();
-  camera();
-  translate(width - 340, height - 190);
-
-  stroke(0);
-  noFill();
-  rect(0, 0, 300, 120);
-
-  if (graphData.length > 1) {
-    stroke(0, 100, 200);
-    noFill();
-    beginShape();
-    for (let i = 0; i < graphData.length; i++) {
-      let x = map(i, 0, graphData.length - 1, 0, 300);
-      let y = map(graphData[i].count, 0, max(dropletCount, 1), 110, 10);
-      vertex(x, y);
+      p.pop();
     }
-    endShape();
+    p.pop();
   }
 
-  fill(0);
-  noStroke();
-  textSize(12);
-  text("Droplet Count Over Time", 60, -10);
-  pop();
-}
-
-function drawSun(intensity) {
-  push();
-  let sunBrightness = map(intensity, 0, 100, 50, 255);
-  translate(-300, -200, -300);
-  fill(255, 255, 0, sunBrightness);
-  noStroke();
-  sphere(30);
-  pop();
-}
-
-function drawSunRays(intensity) {
-  push();
-  stroke(255, 255, 0, map(intensity, 0, 100, 50, 100));
-  strokeWeight(2);
-  for (let i = -5; i <= 5; i++) {
-    line(-300, -200, -300, i * 20, 100, 0);
+  function drawLeaf() {
+    p.fill(50, 205, 50);
+    p.beginShape();
+    p.vertex(0, 0, 0);
+    p.bezierVertex(5, -5, 10, -10, 0, -20);
+    p.bezierVertex(-10, -10, -5, -5, 0, 0);
+    p.endShape(p.CLOSE);
   }
-  pop();
-}
 
-function drawGlassBox() {
-  push();
-  noFill();
-  stroke(100, 100, 255, 30);
-  strokeWeight(1);
-  box(300, 300, 300);
-  pop();
-}
+  function drawPlasticCover() {
+    p.push();
+    p.noFill();
+    p.stroke(135, 206, 250, 100);
+    p.strokeWeight(1);
+    p.translate(0, 20, 0);
+    p.scale(1, 1.5, 1);
+    p.sphere(60, 24, 18);
+    p.pop();
+  }
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
+  function drawDroplets() {
+    p.push();
+    p.fill(173, 216, 230, 180);
+    p.noStroke();
+    for (let i = droplets.length - 1; i >= 0; i--) {
+      let d = droplets[i];
+      p.push();
+      p.translate(d.x, d.y, d.z);
+      p.sphere(d.size);
+      p.pop();
+    }
+    p.pop();
+  }
+
+  function drawLabels() {
+    p.push();
+    p.fill(0);
+    p.textFont(font);
+    p.textSize(12);
+    p.textAlign(p.CENTER);
+
+    p.push();
+    p.translate(0, 180, 70);
+    p.text("Pot", 0, 0);
+    p.pop();
+
+    p.push();
+    p.translate(70, 60, 70);
+    p.text("---------->Plant", 0, 0);
+    p.pop();
+
+    p.push();
+    p.translate(-90, -40, 70);
+    p.text("Plastic Cover --->", 0, 0);
+    p.pop();
+
+    p.push();
+    p.translate(70, -45, 30);
+    p.text("  --> Water Droplets", 0, 0);
+    p.pop();
+
+    p.pop();
+  }
+
+  function displayText2D() {
+    p.resetMatrix();
+    p.camera();
+    p.fill(0);
+    p.textSize(14);
+    p.textFont(font);
+    p.textAlign(p.LEFT);
+
+    let lightVal = lightSlider.value();
+    let elapsed = ((p.millis() - startTime) / 1000).toFixed(1);
+
+    p.text("Light Intensity: " + lightVal + "%", -280, -240);
+    p.text("Droplet Formation Rate: " + lightVal + "%", -280, -220);
+    p.text("Total Droplets Formed: " + dropletCount, -280, -200);
+    p.text("Time Elapsed: " + elapsed + "s", -280, -180);
+    p.text("Experiment: Transpiration in Plants", -100, 240);
+  }
+
+  function drawGraph2D() {
+    p.push();
+    p.resetMatrix();
+    p.camera();
+    p.translate(300, 70);
+
+    p.stroke(0);
+    p.noFill();
+    p.rect(0, 0, 300, 120);
+
+    if (graphData.length > 1) {
+      p.stroke(0, 100, 200);
+      p.noFill();
+      p.beginShape();
+      for (let i = 0; i < graphData.length; i++) {
+        let x = p.map(i, 0, graphData.length - 1, 0, 300);
+        let y = p.map(graphData[i].count, 0, Math.max(dropletCount, 1), 110, 10);
+        p.vertex(x, y);
+      }
+      p.endShape();
+    }
+
+    p.fill(0);
+    p.noStroke();
+    p.textSize(12);
+    p.text("Droplet Count Over Time", 60, -10);
+    p.pop();
+  }
+
+  function drawSun(intensity) {
+    p.push();
+    let sunBrightness = p.map(intensity, 0, 100, 50, 255);
+    p.translate(-300, -200, -300);
+    p.fill(255, 255, 0, sunBrightness);
+    p.noStroke();
+    p.sphere(30);
+    p.pop();
+  }
+
+  function drawSunRays(intensity) {
+    p.push();
+    p.stroke(255, 255, 0, p.map(intensity, 0, 100, 50, 100));
+    p.strokeWeight(2);
+    for (let i = -5; i <= 5; i++) {
+      p.line(-300, -200, -300, i * 20, 100, 0);
+    }
+    p.pop();
+  }
+
+  function drawGlassBox() {
+    p.push();
+    p.noFill();
+    p.stroke(100, 100, 255, 30);
+    p.strokeWeight(1);
+    p.box(300, 300, 300);
+    p.pop();
+  }
+});

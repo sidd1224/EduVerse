@@ -93,10 +93,6 @@ app.set("views", path.join(__dirname, "views"));
 
 // Enable CORS if needed
 app.use(cors({ origin: true }));
-app.use(
-  "/labs/experiments",
-  express.static(path.join(__dirname, "public/labs/experiments"))
-);
 
 
 

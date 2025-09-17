@@ -30,13 +30,14 @@ const BiologyLab = () => {
         setLoading(false);
       });
   }, [classId]);
+const handleRun = (exp) => {
+  const sketchPath =
+    `/labs/experiments/class_${exp.class}/biology/${exp.sketch_name}.js`;
 
-  // Run experiment (client-side)
-  const handleRun = (exp) => {
-    // Compute the public path directly (from frontend/public folder)
-    const sketchPath = `/labs/experiments/class_${exp.class}/biology/${exp.sketch_name}.js`;
-    setCurrentSketch(sketchPath);
-  };
+  navigate("/experiment", { state: { sketchPath } });
+};
+
+
 
   const handleTheory = (id) => {
     fetch(`${API_BASE}/api/theory/${id}`)
