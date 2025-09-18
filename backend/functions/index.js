@@ -347,47 +347,45 @@ app.get("/api/run/:id", async (req, res) => {
   }
 });
 
-// ✅ UPDATED: Theory route (uses Firestore)
+// ✅ Always returns JSON
 app.get("/api/theory/:id", async (req, res) => {
-    try {
-        const experimentId = req.params.id;
-        
-        console.log(`Loading theory for experiment: ${experimentId}`);
-        
-        const doc = await db.collection('experiments').doc(experimentId).get();
-        
-        if (!doc.exists) {
-            console.log(`Experiment not found: ${experimentId}`);
-            return res.status(404).send("Experiment not found");
-        }
-        
-        const experiment = {
-            id: doc.id,
-            ...doc.data()
-        };
-        
-        console.log(`Found experiment theory: ${experiment.title || experimentId}`);
-        
-        // Check if you have EJS rendering setup
-        if (res.render) {
-            res.render("theory", { experiment: experiment });
-        } else {
-            // Return JSON response with theory data
-            res.json({
-                success: true,
-                experiment: experiment,
-                theory: experiment.theory,
-                materials_required: experiment.materials_required,
-                procedure: experiment.procedure,
-                title: experiment.title
-            });
-        }
-        
-    } catch (error) {
-        console.error("Error fetching theory:", error);
-        res.status(500).send("Error loading theory page.");
+  try {
+    const experimentId = req.params.id;
+    console.log(`Loading theory for experiment: ${experimentId}`);
+
+    const doc = await db.collection("experiments").doc(experimentId).get();
+
+    if (!doc.exists) {
+      console.log(`Experiment not found: ${experimentId}`);
+      return res.status(404).json({
+        success: false,
+        message: "Experiment not found",
+      });
     }
+
+    const experiment = { id: doc.id, ...doc.data() };
+
+    console.log(`Found experiment theory: ${experiment.title || experimentId}`);
+
+    return res.json({
+      success: true,
+      experiment,
+      theory: experiment.theory,
+      materials_required: experiment.materials_required,
+      procedure: experiment.procedure,
+      title: experiment.title,
+    });
+  } catch (error) {
+    console.error("Error fetching theory:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error loading theory page.",
+      error: error.message,
+    });
+  }
 });
+
+
 // Helper to normalize subject names
 const normalizeSubject = (subject) => {
   if (!subject) return subject;

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE } from "../../api";
 import ExperimentRunner from "../ExperimentRunner";
+import TheoryView from "../TheoryView"; // ✅ new component file
 
 const BiologyLab = () => {
   const navigate = useNavigate();
@@ -10,7 +11,8 @@ const BiologyLab = () => {
   const [experiments, setExperiments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentSketch, setCurrentSketch] = useState(null);
+  const [currentSketch] = useState(null);
+  const [selectedTheoryId, setSelectedTheoryId] = useState(null); // ✅ state for theory page
 
   // Fetch experiments from backend
   useEffect(() => {
@@ -18,7 +20,10 @@ const BiologyLab = () => {
 
     fetch(`${API_BASE}/api/experiments/Biology/${classId}`)
       .then((res) => {
-        if (!res.ok) return res.text().then((text) => { throw new Error(text); });
+        if (!res.ok)
+          return res.text().then((text) => {
+            throw new Error(text);
+          });
         return res.json();
       })
       .then((data) => {
@@ -30,26 +35,27 @@ const BiologyLab = () => {
         setLoading(false);
       });
   }, [classId]);
-const handleRun = (exp) => {
-  const sketchPath =
-    `/labs/experiments/class_${exp.class}/biology/${exp.sketch_name}.js`;
 
-  navigate("/experiment", { state: { sketchPath } });
-};
-
-
-
-  const handleTheory = (id) => {
-    fetch(`${API_BASE}/api/theory/${id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        alert(`🧪 ${data.experiment.title}\n\n📖 Theory:\n${data.experiment.theory}`);
-      })
-      .catch((err) => {
-        console.error("Theory fetch failed:", err);
-        alert("Failed to fetch theory.");
-      });
+  // Run button
+  const handleRun = (exp) => {
+    const sketchPath = `/labs/experiments/class_${exp.class}/biology/${exp.sketch_name}.js`;
+    navigate("/experiment", { state: { sketchPath } });
   };
+
+  // ✅ Show Theory page instead of alert
+  const handleTheory = (id) => {
+    setSelectedTheoryId(id);
+  };
+
+  // ✅ If a theory is selected → render TheoryView instead
+  if (selectedTheoryId) {
+    return (
+      <TheoryView
+        experimentId={selectedTheoryId}
+        onBack={() => setSelectedTheoryId(null)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-blue-100 relative flex flex-col items-center justify-center px-4 py-10">

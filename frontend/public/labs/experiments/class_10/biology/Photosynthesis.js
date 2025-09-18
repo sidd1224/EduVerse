@@ -1,28 +1,24 @@
-// Photosynthesis.js
-export default function sketch(p) {
+new p5((p) => {
   let lightSlider, co2Slider, tempSlider;
   let bubbleTimer = 0;
   let bubbles = [];
   let font;
 
   p.preload = function () {
-    font = p.loadFont('/static/labs/fonts/myFont.ttf');
+    font = p.loadFont('/labs/fonts/myFont.ttf');
   };
 
   p.setup = function () {
     p.createCanvas(p.windowWidth, p.windowHeight, p.WEBGL);
 
     lightSlider = p.createSlider(0, 100, 50);
-    lightSlider.position(20, 20);
-    lightSlider.style('width', `${Math.min(300, p.windowWidth * 0.3)}px`);
+    lightSlider.position(20, 20).style('width', `${Math.min(300, p.windowWidth * 0.3)}px`);
 
     co2Slider = p.createSlider(0, 100, 50);
-    co2Slider.position(20, 60);
-    co2Slider.style('width', `${Math.min(300, p.windowWidth * 0.3)}px`);
+    co2Slider.position(20, 60).style('width', `${Math.min(300, p.windowWidth * 0.3)}px`);
 
     tempSlider = p.createSlider(0, 50, 25);
-    tempSlider.position(20, 100);
-    tempSlider.style('width', `${Math.min(300, p.windowWidth * 0.3)}px`);
+    tempSlider.position(20, 100).style('width', `${Math.min(300, p.windowWidth * 0.3)}px`);
 
     p.textFont(font);
   };
@@ -50,7 +46,7 @@ export default function sketch(p) {
     displayText2D(bubbleRate);
   };
 
-  // --- All your helper functions ---
+  // --- helper functions ---
   function drawBeaker() {
     p.push();
     p.noFill();
@@ -162,20 +158,15 @@ export default function sketch(p) {
     p.text(`Light Intensity: ${lightSlider.value()}%`, -590, -315);
     p.text(`CO₂ Level: ${co2Slider.value()}%`, -590, -272);
     p.text(`Temperature: ${tempSlider.value()} °C`, -590, -230);
-    p.text(` = Bubble Rate: ${bubbleRate.toFixed(1)} bubbles/sec`, -590, -205);
+    p.text(`= Bubble Rate: ${bubbleRate.toFixed(1)} bubbles/sec`, -590, -205);
     p.text("Photosynthesis Experiment - Hydrilla Oxygen Release", -175, 250);
   }
 
   p.windowResized = function () {
     p.resizeCanvas(p.windowWidth, p.windowHeight);
-
     let sliderWidth = Math.min(300, p.windowWidth * 0.3);
-    lightSlider.position(20, 20);
-    co2Slider.position(20, 60);
-    tempSlider.position(20, 100);
-
     lightSlider.style('width', `${sliderWidth}px`);
     co2Slider.style('width', `${sliderWidth}px`);
     tempSlider.style('width', `${sliderWidth}px`);
   };
-}
+});
