@@ -5,9 +5,11 @@ const path = require("path");
 const fs = require("fs");
 const cors = require("cors");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { FieldValue } = require("firebase-admin/firestore");
 
 admin.initializeApp();
 const db = admin.firestore();
+
 
 // =================================================================
 // CALLABLE FUNCTIONS
@@ -29,27 +31,35 @@ exports.generateToken = onCall(async (request) => {
     const customToken = await admin.auth().createCustomToken(uid);
     return { token: customToken };
 });
-
 exports.createUser = onCall(async (request) => {
-    const { email, password, name, student_class } = request.data;
-    try {
-        const userRecord = await admin.auth().createUser({
-            email,
-            password,
-            displayName: name,
-        });
+  const { email, password, name, student_class } = request.data;
+  try {
+    const userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName: name,
+    });
 
-        await db.collection("students").doc(userRecord.uid).set({
-            name,
-            email,
-            student_class: parseInt(student_class), // store as number
-        });
+    await db.collection("students").doc(userRecord.uid).set({
+      name,
+      email,
+      student_class: parseInt(student_class),
+    });
 
-        return { uid: userRecord.uid };
-    } catch (error) {
-        throw new HttpsError("internal", error.message, error);
-    }
+    // ✅ Create initial empty progress document
+    await db.collection("progress").doc(userRecord.uid).set({
+      lessons: {},
+      quizzes: {},
+      vlabs: {},
+      recentLessons: [],
+    });
+
+    return { uid: userRecord.uid };
+  } catch (error) {
+    throw new HttpsError("internal", error.message, error);
+  }
 });
+
 exports.getStudent = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "The function must be called while authenticated.");
@@ -79,7 +89,85 @@ exports.getStudent = onCall(async (request) => {
     throw new HttpsError("internal", error.message || "Unknown error");
   }
 });
+exports.getProgress = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Not logged in");
 
+  const uid = request.auth.uid;
+  const progressDoc = await db.collection("progress").doc(uid).get();
+
+  if (!progressDoc.exists) {
+    return { lessons: {}, quizzes: {} }; // fallback empty progress
+  }
+
+  return progressDoc.data();
+});exports.markLessonComplete = onCall(async (request) => {
+  const { lessonId, title, subject, classId, chapter } = request.data;
+  if (!request.auth) throw new HttpsError("unauthenticated", "Not logged in");
+
+  const uid = request.auth.uid;
+  const progressRef = db.collection("progress").doc(uid);
+
+  const progressDoc = await progressRef.get();
+  if (!progressDoc.exists) {
+    // ✅ Auto-create if missing
+    await progressRef.set({
+      lessons: {},
+      quizzes: {},
+      vlabs: {},
+      recentLessons: [],
+    });
+  }
+
+  const progress = (await progressRef.get()).data();
+ const now = FieldValue.serverTimestamp();
+
+
+  // Update lesson and recentLessons
+  const updatedLessons = {
+    ...progress.lessons,
+    [lessonId]: { completed: true, lastVisited: now, title, subject, class: classId, chapter },
+  };
+
+  let recentLessons = progress.recentLessons || [];
+  recentLessons = recentLessons.filter((id) => id !== lessonId);
+  recentLessons.unshift(lessonId);
+  recentLessons = recentLessons.slice(0, 5);
+
+  await progressRef.set({ lessons: updatedLessons, recentLessons }, { merge: true });
+
+  return { success: true, lessonId, recentLessons };
+});
+
+exports.markQuizComplete = onCall(async (request) => {
+  const { quizId } = request.data;
+  if (!request.auth) throw new HttpsError("unauthenticated", "Not logged in");
+
+  const uid = request.auth.uid;
+  const progressRef = db.collection("progress").doc(uid);
+
+  await progressRef.set({
+    quizzes: { [quizId]: true }
+  }, { merge: true });
+
+  return { success: true };
+});
+exports.markVlabComplete = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be logged in.");
+  }
+  const { vlabId } = request.data;
+  if (!vlabId) throw new HttpsError("invalid-argument", "vlabId is required.");
+
+  const uid = request.auth.uid;
+  await db.collection("progress").doc(uid).set(
+    {
+      vlabs: { [vlabId]: true },
+    },
+    { merge: true }
+  );
+
+  return { success: true };
+});
 
 // =================================================================
 // EXPRESS SERVER (LESSONS + VLAB)
@@ -114,7 +202,7 @@ const getUserStudentData = async (req) => {
     };
 };
 
-const getAvailableClasses = () => [8, 9, 10, 11, 12];
+const getAvailableClasses = () => [8, 9, 10];
 
 // =================================================================
 // LESSON ROUTES
@@ -449,15 +537,21 @@ app.get("/lessons/:class/:subject/chapter/:chapter", async (req, res) => {
   const folderClass = `Class${classId}`;
 
   try {
+    // ------------------------------
+    // Access control
+    // ------------------------------
     let hasAccess = true;
     try {
       const studentData = await getUserStudentData(req);
       hasAccess = Math.abs(studentData.student_class - classId) <= 1;
     } catch {
-      hasAccess = true;
+      hasAccess = true; // guest access
     }
     if (!hasAccess) return res.status(403).json({ error: "Access denied" });
 
+    // ------------------------------
+    // Read chapter files
+    // ------------------------------
     const chapterPath = path.join(
       __dirname,
       "resources",
@@ -475,7 +569,23 @@ app.get("/lessons/:class/:subject/chapter/:chapter", async (req, res) => {
         )
       : [];
 
-    res.json({ class: classId, subject, chapter, files });
+    // ------------------------------
+    // Generate lesson IDs for each file
+    // ------------------------------
+    const filesWithIds = files.map((file) => {
+      // Normalize class, subject, chapter, and file for ID
+      const lessonId = `${classId}_${subject}_${chapter}_${file}`
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_]/g, ""); // remove special characters
+
+      return { filename: file, lessonId };
+    });
+
+    // ------------------------------
+    // Return JSON response
+    // ------------------------------
+    res.json({ class: classId, subject, chapter, files: filesWithIds });
   } catch (error) {
     console.error("Error reading chapter files:", error);
     res.status(500).json({ error: "Failed to fetch chapter files" });

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { httpsCallable } from "firebase/functions";
-import { functions } from "../firebaseConfig";
+import { functions } from "../../firebaseConfig";
 
 export default function Register() {
   const [loading, setLoading] = useState(false);

@@ -1,11 +1,11 @@
-// src/firebaseConfig.js - UPDATED VERSION
+// src/firebaseConfig.js - FINAL VERSION WITH PROGRESS FUNCTIONS
 
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
 
-// Your project's web app's Firebase configuration
+// Your project's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSy...", // Keep your actual API key
   authDomain: "eduverse-c818a.firebaseapp.com",
@@ -23,32 +23,70 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(app);
 
-// ✅ IMPROVED: Better emulator connection with error handling
+// ✅ Connect emulators in development
 if (window.location.hostname === "localhost") {
   console.log("🔥 Development mode: Connecting to Firebase emulators...");
-  
   try {
-    // Check if emulators are already connected to avoid re-connection errors
-    if (!auth._delegate?._config?.emulator) {
-      connectAuthEmulator(auth, "http://127.0.0.1:9091");
-      console.log("✅ Connected to Auth Emulator on port 9091");
-    }
-    
-    if (!db._delegate?._config?.settings?.host?.includes('127.0.0.1')) {
-      connectFirestoreEmulator(db, "127.0.0.1", 8065);
-      console.log("✅ Connected to Firestore Emulator on port 8065");
-    }
-    
-    if (!functions._delegate?._config?.emulator) {
-      connectFunctionsEmulator(functions, "127.0.0.1", 5008);
-      console.log("✅ Connected to Functions Emulator on port 5008");
-    }
-    
-  } catch (error) {
-    console.log("⚠️ Emulator connection info:", error.message);
-    // This is usually fine - it means emulators are already connected
+    connectAuthEmulator(auth, "http://127.0.0.1:9091");
+    connectFirestoreEmulator(db, "127.0.0.1", 8065);
+    connectFunctionsEmulator(functions, "127.0.0.1", 5008);
+    console.log("✅ Connected to all emulators");
+  } catch (err) {
+    console.log("⚠️ Emulator connection warning:", err.message);
   }
 }
 
-// Export the services for use in other parts of the app
+// ------------------------
+// Callable functions
+// ------------------------
+
+// Fetch logged-in student data
+export const fetchStudent = async () => {
+  const getStudent = httpsCallable(functions, "getStudent");
+  const result = await getStudent();
+  return result.data;
+};
+
+// Fetch student progress (lessons + quizzes + vlabs)
+export const fetchProgress = async () => {
+  const getProgress = httpsCallable(functions, "getProgress");
+  const result = await getProgress();
+  return result.data;
+};
+
+// Mark a lesson as complete
+// Mark a lesson as complete
+export const completeLesson = async ({ lessonId, title, subject, classId, chapter }) => {
+  try {
+    const markLesson = httpsCallable(functions, "markLessonComplete");
+    const result = await markLesson({ lessonId, title, subject, classId, chapter });
+    return result.data; // include for confirmation if needed
+  } catch (err) {
+    console.error("Error marking lesson complete:", err);
+    throw err;
+  }
+};
+
+
+
+
+// Mark a quiz as complete
+export const completeQuiz = async (quizId) => {
+  const markQuiz = httpsCallable(functions, "markQuizComplete");
+  await markQuiz({ quizId });
+};
+
+// Mark a virtual lab as complete
+export const completeVlab = async (vlabId) => {
+  const markVlab = httpsCallable(functions, "markVlabComplete");
+  await markVlab({ vlabId });
+};
+
+// Optional: Reset all lessons/quizzes for testing
+export const resetProgress = async (lessons, quizzes) => {
+  const reset = httpsCallable(functions, "resetProgress");
+  await reset({ lessons, quizzes });
+};
+
+// Export Firebase services
 export { auth, db, functions };

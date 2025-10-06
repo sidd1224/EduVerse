@@ -4,16 +4,16 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import DashboardLayout, { DashboardHome } from "./components/Dashboard.jsx";
 
 import Landing from "./components/Landing";
-import Login from "./components/Login";
+import Login from "./components/auth/Login";
 import ForgotPassword from "./components/ForgotPassword";
-import Register from "./components/Register";
-import TeacherDashboard from "./components/TeacherDashboard";
-import Quiz from "./components/Quiz";
+import Register from "./components/auth/Register";
+import TeacherDashboard from "./components/teacherDashboard/TeacherDashboard.jsx";
+import Quiz from "./components/quiz/Quiz";
 
 // ✅ Import all lab components from the labs folder via index.js
-import { VirtualLab, PhysicsLab, ChemistryLab, BiologyLab } from "./components/labs";
-import LessonsDashboard from "./components/LessonsDashboard.jsx";
-import ExperimentPage from "./components/ExperimentPage";
+import { VirtualLab, PhysicsLab, ChemistryLab, BiologyLab,ExperimentPage } from "./components/labs";
+import LessonsDashboard from "./components/lessons/LessonsDashboard.jsx";
+
 
 // inside <Routes>
 

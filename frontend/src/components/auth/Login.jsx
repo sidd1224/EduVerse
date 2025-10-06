@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { httpsCallable } from "firebase/functions";
-import { auth, functions } from "../firebaseConfig";
+import { auth, functions } from "../../firebaseConfig";
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -11,78 +11,59 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    const email = e.target[0].value;
-    const password = e.target[1].value;
+  const email = e.target[0].value;
+  const password = e.target[1].value;
 
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    // Fetch student profile
     try {
-      console.log("Attempting login:", email);
+      const getStudent = httpsCallable(functions, "getStudent");
+      const studentResult = await getStudent(); // ✅ call with no params
+      const studentData = studentResult.data;
 
-      // ✅ Step 1: Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      console.log("User signed in:", user.uid);
+      localStorage.setItem(
+        "student",
+        JSON.stringify({
+          uid: user.uid,
+          name: studentData.name,
+          email: studentData.email,
+          student_class: studentData.student_class,
+          ...studentData
+        })
+      );
 
-      // ✅ Step 2: Fetch student profile
-      try {
-        const getStudent = httpsCallable(functions, "getStudent");
-        const studentResult = await getStudent({ uid: user.uid });
-        const studentData = studentResult.data;
+      navigate("/dashboard");
+    } catch (studentError) {
+      console.error("Error fetching student data:", studentError);
 
-        // Save to localStorage
-        localStorage.setItem(
-          "student",
-          JSON.stringify({
-            uid: user.uid,
-            name: studentData.name,
-            email: studentData.email,
-            student_class: studentData.student_class,
-            ...studentData
-          })
-        );
+      // Fallback for first-time users
+      localStorage.setItem(
+        "student",
+        JSON.stringify({
+          uid: user.uid,
+          name: user.displayName || "Student",
+          email: user.email,
+          student_class: null
+        })
+      );
 
-        console.log("Student data loaded:", studentData);
-        navigate("/dashboard");
-
-      } catch (studentError) {
-        console.error("Error fetching student data:", studentError);
-
-        // Fallback: redirect to profile setup if no doc
-        localStorage.setItem(
-          "student",
-          JSON.stringify({
-            uid: user.uid,
-            name: user.displayName || "Student",
-            email: user.email,
-            student_class: null
-          })
-        );
-
-        // 👇 Instead of dashboard, send to setup
-        navigate("/dashboard/lessons");
-      }
-
-    } catch (error) {
-      console.error("Login error:", error);
-
-      let errorMessage = "❌ Login failed. Please try again.";
-      if (error.code === "auth/user-not-found") {
-        errorMessage = "❌ User not found! Please register first.";
-      } else if (error.code === "auth/wrong-password") {
-        errorMessage = "❌ Incorrect password!";
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "❌ Invalid email!";
-      } else if (error.code === "auth/too-many-requests") {
-        errorMessage = "❌ Too many failed attempts. Try later.";
-      }
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+      navigate("/dashboard/lessons");
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    setError("❌ Login failed. Please check your credentials.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">

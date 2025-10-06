@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { fetchStudent, fetchProgress } from "../firebaseConfig";
+
+
 import { motion } from "framer-motion";
 import {
   BarChart,
@@ -26,11 +29,6 @@ const SidebarLink = ({ emoji, text, expanded, to }) => (
 );
 
 /* Progress data */
-const progressData = [
-  { name: "Biology", value: 68, fill: "#9f5b5bff" },
-  { name: "Chemistry", value: 50, fill: "#6d6896ff" },
-  { name: "Physics", value: 30, fill: "#6a9684ff" },
-];
 
 /* Animated BarChart Component */
 const AnimatedBarChart = ({ data }) => {
@@ -114,105 +112,153 @@ const DashboardLayout = () => {
   );
 };
 
+// Firebase function to fetch progress
 
-// ✅ 4. Created and exported a new component for the main dashboard content
+// Animated BarChart Component
+
+
+
 export const DashboardHome = () => {
-    const student = JSON.parse(localStorage.getItem("student")) || {
-        name: "Guest",
-        grade: "N/A",
-      };
-    return (
-        <>
-            {/* Search bar + Bell/Profile */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center bg-white rounded-xl shadow p-2 w-1/2">
-                    <input
-                    type="text"
-                    placeholder="Search lessons, quizzes..."
-                    className="flex-1 p-2 rounded-l-xl outline-none"
-                    />
-                </div>
-                <div className="flex items-center space-x-3">
-                    <div className="bg-purple-100 p-2 rounded-full cursor-pointer">🔔</div>
-                    <div className="flex items-center space-x-2">
-                    <div className="bg-purple-400 p-3 rounded-full text-white">👤</div>
-                    <div>
-                        <p className="font-bold">{student.name}</p>
-                        <p className="text-sm text-gray-500">{student.grade}</p>
-                    </div>
-                    </div>
-                </div>
+  const [student, setStudent] = useState({});
+  const [lessonsProgress, setLessonsProgress] = useState({});
+  const [quizzesProgress, setQuizzesProgress] = useState({});
+  const [vlabsProgress, setVlabsProgress] = useState({});
+  const [loadingProgress, setLoadingProgress] = useState(true);
+
+  useEffect(() => {
+    const loadStudentAndProgress = async () => {
+      setLoadingProgress(true);
+      try {
+        // Fetch logged-in student info
+        const studentData = await fetchStudent();
+        setStudent({
+          name: studentData.name,
+          grade: studentData.student_class,
+        });
+
+        // Fetch progress
+        const progress = await fetchProgress();
+        setLessonsProgress(progress.lessons || {});
+        setQuizzesProgress(progress.quizzes || {});
+        setVlabsProgress(progress.vlabs || {});
+      } catch (err) {
+        console.error("Error fetching student or progress:", err);
+      } finally {
+        setLoadingProgress(false);
+      }
+    };
+
+    loadStudentAndProgress();
+  }, []);
+
+  // Calculate progress per subject
+  const subjects = ["Physics", "Chemistry", "Biology"];
+  const progressData = subjects.map((subject) => {
+    // Lessons
+    const lessonKeys = Object.keys(lessonsProgress).filter((k) =>
+      k.toLowerCase().includes(subject.toLowerCase())
+    );
+    const completedLessons = lessonKeys.filter((k) => lessonsProgress[k]).length;
+
+    // Quizzes
+    const quizKeys = Object.keys(quizzesProgress).filter((k) =>
+      k.toLowerCase().includes(subject.toLowerCase())
+    );
+    const completedQuizzes = quizKeys.filter((k) => quizzesProgress[k]).length;
+
+    // Virtual Labs
+    const vlabKeys = Object.keys(vlabsProgress).filter((k) =>
+      k.toLowerCase().includes(subject.toLowerCase())
+    );
+    const completedVlabs = vlabKeys.filter((k) => vlabsProgress[k]).length;
+
+    const totalItems = lessonKeys.length + quizKeys.length + vlabKeys.length;
+    const completedItems = completedLessons + completedQuizzes + completedVlabs;
+
+    const percent = totalItems ? Math.round((completedItems / totalItems) * 100) : 0;
+    const colorMap = { Physics: "#6a9684ff", Chemistry: "#6d6896ff", Biology: "#9f5b5bff" };
+
+    return { name: subject, value: percent, fill: colorMap[subject] };
+  });
+
+  return (
+    <>
+      {/* Search bar + Profile */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center bg-white rounded-xl shadow p-2 w-1/2">
+          <input
+            type="text"
+            placeholder="Search lessons, quizzes..."
+            className="flex-1 p-2 rounded-l-xl outline-none"
+          />
+        </div>
+        <div className="flex items-center space-x-3">
+          <div className="bg-purple-100 p-2 rounded-full cursor-pointer">🔔</div>
+          <div className="flex items-center space-x-2">
+            <div className="bg-purple-400 p-3 rounded-full text-white">👤</div>
+            <div>
+              <p className="font-bold">{student.name}</p>
+              <p className="text-sm text-gray-500">{student.grade}</p>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Welcome Card */}
-            <div className="bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl text-white p-6 flex items-center space-x-4 w-full mb-6 relative overflow-hidden">
-                <div>
-                    <h3 className="text-xl font-bold">Welcome back, {student.name}!</h3>
-                    <p className="text-purple-100 text-sm">
-                    Always stay updated in your portal
-                    </p>
-                </div>
-                <div className="absolute right-3 top-3 animate-bounce text-3xl">🎓</div>
-            </div>
+      {/* Welcome Card */}
+      <div className="bg-gradient-to-r from-purple-500 to-purple-700 rounded-xl text-white p-6 flex items-center space-x-4 w-full mb-6 relative overflow-hidden">
+        <div>
+          <h3 className="text-xl font-bold">Welcome back, {student.name}!</h3>
+          <p className="text-purple-100 text-sm">Always stay updated in your portal</p>
+        </div>
+        <div className="absolute right-3 top-3 animate-bounce text-3xl">🎓</div>
+      </div>
 
-            {/* Active Lessons */}
-            <h3 className="text-lg font-bold mb-2">Active Lessons</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                {/* Biology Card */}
-                <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
-                    <img
-                    src="https://b3801007.smushcdn.com/3801007/wp-content/uploads/2022/05/DNA-structure-2048x1152.jpg?lossy=2&strip=1&webp=1"
-                    alt="Biology"
-                    className="w-32 h-32 object-cover rounded-xl mb-4"
-                    />
-                    <p className="font-bold text-purple-700 text-lg mb-2">Biology</p>
-                    <p className="text-gray-500 text-sm text-center mb-3">
-                    DNA structure and functions
-                    </p>
-                    <button className="bg-purple-600 text-white px-4 py-2 rounded">
-                    View Lesson
-                    </button>
-                </div>
+      {/* Active Lessons */}
+      <h3 className="text-lg font-bold mb-2">Active Lessons</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        {/* Biology */}
+        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
+          <img
+            src="https://b3801007.smushcdn.com/3801007/wp-content/uploads/2022/05/DNA-structure-2048x1152.jpg?lossy=2&strip=1&webp=1"
+            alt="Biology"
+            className="w-32 h-32 object-cover rounded-xl mb-4"
+          />
+          <p className="font-bold text-purple-700 text-lg mb-2">Biology</p>
+          <p className="text-gray-500 text-sm text-center mb-3">DNA structure and functions</p>
+          <button className="bg-purple-600 text-white px-4 py-2 rounded">View Lesson</button>
+        </div>
+        {/* Chemistry */}
+        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
+          <img
+            src="https://wallpapers.com/images/high/chemistry-pictures-4qvzw3gjed2dk7me.webp"
+            alt="Chemistry"
+            className="w-32 h-32 object-cover rounded-xl mb-4"
+          />
+          <p className="font-bold text-purple-700 text-lg mb-2">Chemistry</p>
+          <p className="text-gray-500 text-sm text-center mb-3">Introduction to Molecular Chemistry</p>
+          <button className="bg-purple-600 text-white px-4 py-2 rounded">View Lesson</button>
+        </div>
+        {/* Physics */}
+        <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
+          <img
+            src="https://universidadeuropea.com/resources/media/images/ramas-fisica-800x450.width-1200.format-webp.webp"
+            alt="Physics"
+            className="w-32 h-32 object-cover rounded-xl mb-4"
+          />
+          <p className="font-bold text-purple-700 text-lg mb-2">Physics</p>
+          <p className="text-gray-500 text-sm text-center mb-3">Fundamentals of Mechanics and Motion</p>
+          <button className="bg-purple-600 text-white px-4 py-2 rounded">View Lesson</button>
+        </div>
+      </div>
 
-                {/* Chemistry Card */}
-                <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
-                    <img
-                    src="https://wallpapers.com/images/high/chemistry-pictures-4qvzw3gjed2dk7me.webp"
-                    alt="Chemistry"
-                    className="w-32 h-32 object-cover rounded-xl mb-4"
-                    />
-                    <p className="font-bold text-purple-700 text-lg mb-2">Chemistry</p>
-                    <p className="text-gray-500 text-sm text-center mb-3">
-                    Introduction to Molecular Chemistry
-                    </p>
-                    <button className="bg-purple-600 text-white px-4 py-2 rounded">
-                    View Lesson
-                    </button>
-                </div>
+      {/* Progress Section */}
+      <h3 className="text-lg font-bold mb-2">Your Progress</h3>
+      {loadingProgress ? <p>Loading progress...</p> : <AnimatedBarChart data={progressData} />}
+    </>
+  );
+};
 
-                {/* Physics Card */}
-                <div className="bg-white rounded-xl shadow p-6 flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300">
-                    <img
-                    src="https://universidadeuropea.com/resources/media/images/ramas-fisica-800x450.width-1200.format-webp.webp"
-                    alt="Physics"
-                    className="w-32 h-32 object-cover rounded-xl mb-4"
-                    />
-                    <p className="font-bold text-purple-700 text-lg mb-2">Physics</p>
-                    <p className="text-gray-500 text-sm text-center mb-3">
-                    Fundamentals of Mechanics and Motion
-                    </p>
-                    <button className="bg-purple-600 text-white px-4 py-2 rounded">
-                    View Lesson
-                    </button>
-                </div>
-            </div>
 
-            {/* Progress Section */}
-            <h3 className="text-lg font-bold mb-2">Your Progress</h3>
-            <AnimatedBarChart data={progressData} />
-        </>
-    )
-}
 
 export default DashboardLayout;
 

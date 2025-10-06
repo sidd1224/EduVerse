@@ -1,6 +1,6 @@
 // src/components/labs/TheoryView.jsx
 import { useState, useEffect } from "react";
-import { API_BASE } from "../api";
+import { API_BASE } from "../../api";
 
 export default function TheoryView({ experimentId, onBack }) {
   const [theoryData, setTheoryData] = useState(null);
